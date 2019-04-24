@@ -1,0 +1,36 @@
+[
+    {
+        "_comment": [ "07.06.2018 tps",
+            "Configuration for developer page that generates URL destinations",
+            "for assignment manes. Needs to be independent of terms_config.",
+            "Each array element describes a CST term.",
+            "course_id is a course's Canvas ID."
+        ],
+        "name": "Term 1",
+        "course_id": 1
+    },
+    {
+        "name": "Term 1A",
+        "course_id": 2
+    },
+    {
+        "name": "Term 1B",
+        "course_id": 3
+    },
+    {
+        "name": "Term 2",
+        "course_id": 4
+    },
+    {
+        "name": "Term 2A",
+        "course_id": 5
+    },
+    {
+        "name": "Term 2B",
+        "course_id": 5
+    },
+    {
+        "name": "Term 3",
+        "course_id": 6
+    }
+    ]

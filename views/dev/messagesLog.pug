@@ -1,0 +1,91 @@
+doctype html
+html(lang='en')
+  head
+    title Messages log
+    link(rel="stylesheet", href=APP_URL + "LatoLatin/latolatinfonts.css")
+    link(rel="stylesheet", href=APP_URL + "style.css")
+  body
+    p
+      A(HREF="./home") Home
+    H1 Twilio Messages Log
+    TABLE.data
+      THEAD
+        TR
+          TH canvasUserId
+          TH alert
+          TH transport
+          TH timestamp
+          TH twilioMessage
+      TBODY
+        each msg in messages
+          TR
+            TD= msg.canvasUserId
+            TD= msg.alert
+            TD= msg.transport
+            TD
+              SPAN(style="white-space:nowrap")= msg.timestamp.toLocaleString('en-US')
+            TD
+              //- Make listing compact by displaying only the message ID,
+              //- with options to show more by clicking anchor tags.
+              - var twilioMsg = JSON.parse(msg.twilioMessage)
+              - var sid = twilioMsg.sid
+              - var nodeId = "sid_" + sid
+              A(href="#" onclick=`toggleTwilioMessage('${nodeId}'); return false;`)= sid
+              DIV(id=nodeId style="display:none")
+                PRE= JSON.stringify(twilioMsg, null, 2)
+                A(href="#" onclick=`lookupTwilioSid(this, '${sid}'); return false;`) Lookup Twilio Message Record
+    P= "Record count: " + messages.length
+    
+    script.
+
+      function toggleTwilioMessage(nodeId) {
+        var node = document.getElementById(nodeId);
+        if (node) {
+          node.style.display = (node.style.display === 'block') ? 'none' : 'block';
+        }
+      }
+
+
+      function lookupTwilioSid(anchorNode, sid) {
+
+        var httpRequest = new XMLHttpRequest();
+        if (!httpRequest) {
+          alert('Giving up :( Cannot create an XMLHTTP instance');
+          done();
+          return false;
+        }
+
+        const apiUrl = '../api/v0/notifications/' + sid;
+
+        httpRequest.onreadystatechange = getTwilioMsgHandler;
+        httpRequest.open('GET', apiUrl, true);
+
+        httpRequest.send();
+
+        function getTwilioMsgHandler() {
+          if (httpRequest.readyState === XMLHttpRequest.DONE) {
+            if (httpRequest.status === 200) {
+
+            // Don't need the hyperlink anymore
+            anchorNode.hidden = true;
+
+            // Add a heading for the result
+            var divNode = document.createElement("DIV");
+            divNode.innerHTML = '<B>Twilio Message Record:<B>';
+            anchorNode.parentNode.appendChild(divNode);
+
+            // Result should be JSON
+            var json = JSON.parse(httpRequest.responseText);
+
+            // Add node to display results from Twilio
+            var preNode = document.createElement("PRE");
+            preNode.textContent = JSON.stringify(json, null, 2);
+            anchorNode.parentNode.appendChild(preNode);
+
+
+            } else {
+              alert('There was a problem with the request.\nRequest status:' + httpRequest.status);
+            }
+          } // end request ready
+        } // end request handler
+      } // lookupTwilioSid testGet()

@@ -1,0 +1,30 @@
+doctype html
+html(lang='en')
+  head
+    title CST Observations Faculty List
+    link(rel="stylesheet", href="./../LatoLatin/latolatinfonts.css")
+    link(rel="stylesheet", href="./../style.css")
+    STYLE.
+      UL {
+        columns: 4;
+        list-style: none;
+      }
+      LI {
+        margin-bottom: 8px;
+      }
+
+  body
+    if userRoles.includes('dev')
+      p
+        A(HREF=APP_URL +"dev/home") Home
+    H1 CST Observations Faculty List
+    H2 Teachers
+    ul
+      each teacher in teachers
+        li
+          A(HREF=APP_URL + "dash/faculty/" + teacher.id + '/obs')= teacher.name
+    H2 TAs
+    ul
+      each ta in tas
+        li
+          A(HREF=APP_URL + "dash/faculty/" + ta.id + '/obs')= ta.name

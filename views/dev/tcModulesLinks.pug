@@ -1,0 +1,25 @@
+doctype html
+html(lang='en')
+  head
+    title Links to Teacher Candidate Modules Dashboards
+    link(rel="stylesheet", href="./../LatoLatin/latolatinfonts.css")
+    link(rel="stylesheet", href="./../style.css")
+    STYLE.
+      UL {
+        columns: 4;
+        list-style: none;
+      }
+      LI {
+        margin-bottom: 8px;
+      }
+
+  body
+    if userRoles.includes('dev')
+      p
+        A(HREF=APP_URL +"dev/home") Home
+    H1 Links to Teacher Candidate Modules Dashboards
+    H2 Teacher Candidates
+    ul
+      each student in students
+        li
+          A(HREF=APP_URL + "dash/tc/" + student.id + '/mod')= student.name

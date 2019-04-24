@@ -1,0 +1,171 @@
+/* Styles for observations page */
+
+.show-all-control {
+  margin-top: 6px;
+}
+
+.show-all-control label {
+  font-weight:normal
+}
+
+.assignment-container { }
+
+.obs-status-container {
+  margin-left: 50px;
+}
+
+.obs-tools-container {
+  float: left;
+  width: 50px;
+}
+
+.obs-eye-container {
+  /* float: left; */
+  /* width: 50px; */
+ /* border: solid 1px red; */
+}
+
+.obs-eye-icon {
+  width: 24px;
+  height: 16px;
+  cursor: pointer;
+}
+ 
+.obs-eye-checkbox {
+  display: none;
+}
+
+.obs-eye-label {
+  background-image: url("obs-icons/eye-seen-48.png");
+  background-repeat: no-repeat;
+  background-size: 24px 16px;
+  width: 24px;
+  height: 16px;
+  cursor: pointer;
+  display:inline-block;
+
+}
+
+.obs-eye-checkbox:checked + .obs-eye-label {
+  background-image: url("obs-icons/eye-not-seen-48.png");
+}
+
+.obs-edit-container {
+  margin-top: 16px;
+}
+
+.obs-edit-icon {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.obs-assignment-name-container {
+  height: 32px;
+  width: 180px;
+  white-space: normal;  /* override table */
+  word-break: break-word;
+  overflow: hidden;
+  text-align: left;
+/*  border: solid 1px red;*/
+}
+
+.obs-status-icons-container {
+  text-align: left;
+}
+
+.obs-status-icon {
+  height: 32px;
+  width: 32px;
+}
+
+IMG.icons-key {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 64px;
+  width: 40%;
+  height: 40%;
+  /* width: 720px; */
+  /* height: 282px; */
+}
+
+
+/********** Transition Effects **********/
+
+.hide-transition {
+  /* visibility: hidden; */
+  opacity: 0;
+  /* transition: visibility 0s 1s, opacity 1s linear; */
+  transition: opacity .5s;
+}
+
+
+/********** Table Styles **********/
+
+TABLE.obs_table {
+  border-collapse: collapse;
+  table-layout: fixed; 
+}
+
+TABLE.obs_table TD, TABLE.obs_table TH {
+  font-size: 14px;
+  white-space: nowrap;
+  border: 1px solid #CCC;
+  margin: 0px;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+TABLE.obs_table TD {
+  height: 96px;
+  text-align: center;
+}
+
+TABLE.obs_table TH {
+  height: 63px;
+}
+
+.obs_students_table td, .students_table th {
+  font-size: 14px;
+  white-space: nowrap;
+  border: 1px solid #CCC;
+  padding:4px;
+}
+
+
+
+.obs_students_table {
+  border-collapse: collapse;
+}
+
+.obs_students_table td {
+  height: 96px;
+}
+
+TH.obs_student_col {
+  width:230px;
+  height: 45px;  
+}
+
+TD.obs_student_col {
+  width:230px;
+  height: 72px; 
+  background-color: #eff3f4;
+}
+
+/********** Styles for cell number form **********/
+
+.form-sms {
+  margin-top: 60px;
+  text-align: center;
+}
+
+.form-sms-feedback {
+  border-radius: 18px;
+  display: none;
+  padding: 12px;
+  margin: 12px;
+  background-color: PowderBlue;
+  /* background-color: #eff3f4; */
+}

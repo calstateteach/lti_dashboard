@@ -1,0 +1,68 @@
+doctype html
+html(lang='en')
+  head
+    title Assignment URLs
+    link(rel="stylesheet", href=APP_URL + "LatoLatin/latolatinfonts.css")
+    link(rel="stylesheet", href=APP_URL + "style.css")
+    style.
+      TABLE.data {
+        margin-bottom: 60px
+      }
+      .dont-wrap {
+        white-space: nowrap
+      }
+  body
+    p
+      A(HREF="./home") Home
+    H1 Assignment URLs Extraction
+    P Use this page to generate a CSV file that can be used as the URL destination configuration for the redirect LTI.
+    H2 Courses
+    TABLE.data
+      TR
+        TH Term
+        TH Canvas Name
+        TH Canvas ID
+      for term in terms
+        TR
+          TD= term.name
+          -var course = courses.find( e => e.id === term.course_id)
+          TD= course.name
+          TD(STYLE='text-align: right')= course.id
+
+    //- H2 Assignment URLs by Course
+    //- TABLE.data
+    //-   TR
+    //-     TH Index
+    //-     TH Assignment Name
+    //-     for term in terms
+    //-       TH= term.name
+    //-   for assignment, index in courseAssignments
+    //-     TR
+    //-       TD= index + 1
+    //-       TD(CLASS="dont-wrap")= assignment.name
+    //-        for term in terms
+    //-         TD= assignment.url[term.name]
+    //- H2 Assignment URLs by Destination
+    //- TABLE.data
+    //-   TR
+    //-     TH Index
+    //-     TH Assignment Name
+    //-     TH Encoded Name
+    //-     TH Destination 1
+    //-     TH Destination 2
+    //-     TH Destination 3
+    //-   for assignment, index in assignmentDestinations
+    //-     TR
+    //-       TD= index + 1
+    //-       TD(CLASS="dont-wrap")= assignment.name
+    //-       TD(CLASS="dont-wrap")= assignment.name_encoded
+    //-       TD(CLASS="dont-wrap")= assignment.destination_1
+    //-       TD(CLASS="dont-wrap")= assignment.destination_2
+    //-       TD(CLASS="dont-wrap")= assignment.destination_3
+
+    //- H1 Assignment URLs by Destination as CSV Collection
+    //- PRE= JSON.stringify(csv, null, 2)
+    H2
+      A(HREF="assignmentUrls?out=csv") Download CSV
+      //- IMG(SRC="../spinner_small.gif" ID="spinner" STYLE="visibility:hidden; margin-left:20px;")
+    P It will take about 22 seconds to query the Canvas API for assignments &amp; prepare the download.

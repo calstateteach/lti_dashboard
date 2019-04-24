@@ -1,0 +1,133 @@
+[
+    {
+        "_comment": [ 
+            "Each array element describes a CST term and its modules.",
+            "course_id is a course's Canvas ID.",
+            "code is the course code used in CAM Google spreadsheet.",
+            "isupe_prefix is prefix for name of each faculty member's iSupervision course",
+            "   Append faculty member's login ID to get their iSupervision course name.",
+            "dashboard_modules is a list describing the modules as displayed in the dashboard.",
+            "quiz_titles specifies alternate titles to display for quizzes."
+        ],
+        
+        "name": "Course Name 1",
+        "course_id": 995,
+        "isupe_prefix": "prefix1S-",
+        "code": "991",
+        "dashboard_modules": [
+            { "name": "Module Name 1", "module_indices": [0] }, 
+            { "name": "Module Name 2", "module_indices": [1] }, 
+            { "name": "Module Name 3", "module_indices": [2, 3] }, 
+            { "name": "Module Name 4", "module_indices": [4] }, 
+            { "name": "Module Name 5", "module_indices": [5] },
+            { "name": "Module Name 6", "module_indices": [6, 7, 8] } 
+        ]
+    },
+    {
+        "name": "Course Name 1A",
+        "course_id": 996,
+        "isupe_prefix": "prefix1S-",
+        "code": "991A",
+        "dashboard_modules": [
+            { "name": "Module Name 1", "module_indices": [0] }, 
+            { "name": "Module Name 2", "module_indices": [1] }, 
+            { "name": "Module Name 3", "module_indices": [2, 3, 4] }
+        ]
+    },
+    {
+        "name": "Course Name 1B",
+        "course_id": 997,
+        "isupe_prefix": "prefix1S-",
+        "code": "991B",
+        "dashboard_modules": [
+            { "name": "Module Name 4", "module_indices": [0] }, 
+            { "name": "Module Name 5", "module_indices": [1] }, 
+            { "name": "Module Name 6", "module_indices": [2, 3, 4] }
+        ]
+   },
+    {
+        "name": "Course Name 2",
+        "course_id": 998,
+        "isupe_prefix": "prefix2S-",
+        "code": "992",
+        "dashboard_modules": [
+            { "name": "Module Name 7", "module_indices": [0] }, 
+            { "name": "Module Name 8", "module_indices": [1, 2] }, 
+            { "name": "Module Name 9", "module_indices": [3] }, 
+            { "name": "Module Name 10", "module_indices": [4, 5, 6] }, 
+            { "name": "Module Name 11", "module_indices": [7] }
+        ],
+        "quiz_titles": [
+            { "id": 107, "title": "Alternate title"}
+        ]
+    },
+    {
+        "name": "Course Name 2A",
+        "course_id": 999,
+        "isupe_prefix": "prefix2S-",
+        "code": "992A",
+        "dashboard_modules": [
+            { "name": "Module Name 7", "module_indices": [0] }, 
+            { "name": "Module Name 8", "module_indices": [1, 2, 3] }
+        ]
+    },
+    {
+        "name": "Course Name 2B",
+        "course_id": 990,
+        "isupe_prefix": "prefix2S-",
+        "code": "992B",
+        "dashboard_modules": [
+            { "name": "Module Name 9", "module_indices": [0] }, 
+            { "name": "Module Name 10", "module_indices": [1, 2, 3] }, 
+            { "name": "Module Name 11", "module_indices": [4] }
+        ],
+        "quiz_titles": [
+            { "id": 106, "title": "Alternate title"}
+        ]
+    },
+    {
+        "name": "Course Name 3",
+        "course_id": 991,
+        "isupe_prefix": "prefix3S-",
+        "code": "993",
+        "dashboard_modules": [
+            { "name": "Module Name 11", "module_indices": [0] }, 
+            { "name": "Module Name 12", "module_indices": [1] }, 
+            { "name": "Module Name 13", "module_indices": [2] }, 
+            { "name": "Module Name 14", "module_indices": [3] }, 
+            { "name": "Module Name 15", "module_indices": [4] }, 
+            { "name": "Module Name 16", "module_indices": [5, 6, 7] }
+        ],
+        "quiz_titles": [
+            { "id": 100, "title": "Registered for edTPA?"}
+        ]
+    },
+    {
+        "name": "Course Name 4S",
+        "course_id": 632,
+        "isupe_prefix": "prefix4S-",
+        "code": "994S",
+        "dashboard_modules": [
+            { "name": "Beginning of Course Name 4S Forms", "module_indices": [0] }, 
+            { "name": "Module Name 11", "module_indices": [1] }, 
+            { "name": "Module Name 12", "module_indices": [2] }, 
+            { "name": "Module Name 13", "module_indices": [3] }, 
+            { "name": "Module Name 14", "module_indices": [4] },
+            { "name": "End of Course Name 4S Forms", "module_indices": [5] } 
+        ]
+    },
+    {
+        "name": "Course Name 1 Demonstration",
+        "course_id": 419,
+        "isupe_prefix": "prefix1S-",
+        "code": "991",
+        "dashboard_modules": [
+            { "name": "Module Name 1", "module_indices": [0] }, 
+            { "name": "Module Name 2", "module_indices": [1] }, 
+            { "name": "Module Name 3", "module_indices": [2, 3, 4] }, 
+            { "name": "Module Name 4", "module_indices": [5] }, 
+            { "name": "Module Name 5", "module_indices": [6] },
+            { "name": "Module Name 6", "module_indices": [7, 8, 9] } 
+        ]
+    }
+]

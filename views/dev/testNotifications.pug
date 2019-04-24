@@ -1,0 +1,135 @@
+doctype html
+html(lang='en')
+  head
+    title CST Dashboard Notifications Test
+    link(rel="stylesheet", href=APP_URL + "LatoLatin/latolatinfonts.css")
+    link(rel="stylesheet", href=APP_URL + "style.css")
+    STYLE.
+      PRE {
+        padding:10px;
+      }
+  body
+    p
+      A(HREF="./home") Home
+    H1 CST Dashboard Notifications Test
+    P="Test endpoint " + APP_URL + "api/v0/notifications for AJAX calls to send SMS notifications."
+
+    H2 POST
+    DIV
+      LABEL(FOR="msgTo") To number:
+    DIV
+      INPUT(TYPE="text" ID="msgTo" VALUE="4155551212" MAXLENGTH="10" STYLE="width:100px")
+    DIV
+      LABEL(FOR="msgBody") Message body:
+    DIV
+      TEXTAREA(ID="msgBody" ROWS="5" COLS="40") Hello from the CST dashboard.
+    BUTTON(ID="btnPost" ONCLICK="testPost()") POST
+    PRE(ID="outputPost")
+
+    H2 GET
+    DIV
+      LABEL(FOR="getSid") Message SID:
+    DIV
+      INPUT(TYPE="text" ID="getSid" VALUE="SMf7631a5a641841b29f49c56337e66099" MAXLENGTH="50" STYLE="width:300px")
+    BUTTON(ID="btnGet" ONCLICK="testGet()") GET
+    PRE(ID="getOutput")
+
+    script.
+      // Implement [Enter] on form input fields
+      document.addEventListener("DOMContentLoaded", () => {
+
+        function setEnterEvent(txtInputId, btnId) {
+          // Get the input field
+          var input = document.getElementById(txtInputId);
+
+          // Execute a function when the user releases a key on the keyboard
+          input.addEventListener("keyup", function(event) {
+            // Cancel the default action, if needed
+            event.preventDefault();
+            // Number 13 is the "Enter" key on the keyboard
+            if (event.keyCode === 13) {
+              // Trigger the button element with a click
+              document.getElementById(btnId).click();
+            }
+          });
+        }
+   
+        setEnterEvent("getSid", "btnGet");
+      }); // End event listener
+
+
+      function testPost() {
+
+        var httpRequest = new XMLHttpRequest();
+        if (!httpRequest) {
+          alert('Giving up :( Cannot create an XMLHTTP instance');
+          done();
+          return false;
+        }
+
+        const apiUrl = '../api/v0/notifications';
+        const msgTo = parseInt(document.getElementById('msgTo').value, 10);
+        const msgBody = document.getElementById('msgBody').value;
+        const jsonString = JSON.stringify({
+          "msgTo": msgTo,
+          "msgBody": msgBody
+        });
+        //- const postString = 'msgTo=' + encodeURIComponent(msgTo)
+        //-   + '&msgBody=' + encodeURIComponent(msgBody)
+
+        httpRequest.onreadystatechange = testPostHandler;
+        httpRequest.open('POST', apiUrl, true);
+        //- httpRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        //- httpRequest.send(postString);
+        httpRequest.setRequestHeader("Content-type", "application/json");
+        httpRequest.send(jsonString);
+
+        function testPostHandler() {
+          if (httpRequest.readyState === XMLHttpRequest.DONE) {
+            if (httpRequest.status === 200) {
+              const preTag = document.getElementById('outputPost')
+              const json = JSON.parse(httpRequest.responseText);
+              preTag.textContent =  JSON.stringify(json, null, 2);
+
+              // Help user by using message sid as the input for GET.
+              const getInput = document.getElementById('getSid');
+              if (getInput) {
+                getInput.value = json.sid;
+              }
+
+            } else {
+              alert('There was a problem with the request.\nRequest status:' + httpRequest.status);
+            }
+          } // end request ready
+        } // end request handler
+      } // end testPut()
+
+      function testGet() {
+
+        var httpRequest = new XMLHttpRequest();
+        if (!httpRequest) {
+          alert('Giving up :( Cannot create an XMLHTTP instance');
+          done();
+          return false;
+        }
+
+        const canvasUserId = document.getElementById('getSid').value;
+        const apiUrl = '../api/v0/notifications/' + canvasUserId;
+
+        httpRequest.onreadystatechange = testGetHandler;
+        httpRequest.open('GET', apiUrl, true);
+
+        httpRequest.send();
+
+        function testGetHandler() {
+          if (httpRequest.readyState === XMLHttpRequest.DONE) {
+            if (httpRequest.status === 200) {
+              const preTag = document.getElementById('getOutput');
+              preTag.textContent = JSON.stringify(JSON.parse(httpRequest.responseText), null, 2);
+            } else {
+              alert('There was a problem with the request.\nRequest status:' + httpRequest.status);
+            }
+          } // end request ready
+        } // end request handler
+      } // end testPut()
+      

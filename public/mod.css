@@ -1,0 +1,165 @@
+/* Styles for modules dashboard.
+08.19.2018 tps Created to supercede style.css & style_dash_scroll.css.
+08.30.2018 tps Added style for modules key graphic.
+*/
+
+body {
+  font-family: LatoLatinWeb, "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+A {
+  text-decoration: none;  /* Underlines make links with numbers hard to read. */
+}
+
+
+/* Data table */
+TABLE.data {
+  border-collapse: collapse;
+  font-size: smaller;
+}
+
+TABLE.data TH, TABLE.data TD {
+  padding: 4px;
+  border: 1px solid black;
+}
+
+TABLE.data TD {
+  vertical-align: top;
+}
+
+LABEL {
+  font-weight: bold;
+}
+
+
+/* -------------- Scrolling table, rowspans in headers --------------------*/
+  
+.scrolling_right {
+  overflow-x:auto;
+  margin-left:239px;
+  /* margin-left:318px; */
+}
+
+TABLE.dash_table {
+  border-collapse: collapse;
+  table-layout: fixed; 
+}
+
+TABLE.dash_table TD, TABLE.dash_table TH {
+  font-size: 14px;
+  white-space: nowrap;
+  border: 1px solid #CCC;
+  margin: 0px;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+TABLE.dash_table TD {
+  width: 130px;
+  /* height: 36px; */
+  height: 38px;
+}
+
+TABLE.dash_table TH {
+  height: 63px;
+}
+
+THEAD.dash_head_half_height TH {  /* Half height rows for head cells with rowspans. */
+  height: 30px;
+}
+
+/* -------------- Fixed column table --------------------*/
+
+.fixed_left {
+  position:absolute;
+}
+
+/* -------------- Student Column --------------------*/
+
+TABLE.dash_table TH.student_col {
+  width:230px;
+  height: 45px;  
+}
+
+TABLE.dash_table TD.student_col {
+  width:230px;
+  /* height: 36px;  */
+  height: 38px; 
+  background-color: #eff3f4;
+  text-align: center;
+}
+
+/* -------------- Module Cell --------------------*/
+
+.mod-status-container {
+    width: 132px;
+    /* width: 126px; */
+    /* height: 34px; */
+    /* margin-left: 24px; */
+    margin-top: -1px;
+    /* padding-left: 12px; */
+  }
+  
+  .ass-grid-container {
+  /*  margin-left: 4px;*/
+  /*  margin-right: 20px;*/
+    /* width: 96px; */
+    float: left;
+  }
+  
+  .mod-status-side {
+    float: right;
+    /* margin-left: 8px */
+  }
+  
+  .new-submission-container {
+    text-align: right;
+  }
+  
+  .mod-grade-container {
+    font-size: 14px;
+    font-weight: bold;
+  }
+  
+  .ass-status-img {
+    height: 10px;
+    width: 10px;
+  }
+  
+  .new-submission-img {
+    height: 14px;
+    width: 14px;
+  }
+  
+  .ass-status-col {
+    height: 11px;
+    float: left;
+    margin-left: 1px;
+  }
+  
+  .ass-status-row {
+  }
+
+  .ass-status-row::after {
+    content: "";
+    clear: both;
+    display: table;
+  }
+
+  .rubric-status-img {
+    height: 12px;
+    width: 12px;
+    margin-bottom: -1px;
+  }
+  
+/* -------------- Key Graphic --------------------*/
+
+  IMG.mod-key {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 64px;
+    width: 40%;
+    height: 40%;
+  }
+  

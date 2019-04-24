@@ -1,0 +1,21 @@
+doctype html
+html(lang='en')
+ head
+   title CST Dashboard Scan for Hands
+   link(rel="stylesheet", href=APP_URL + "LatoLatin/latolatinfonts.css")
+   link(rel="stylesheet", href=APP_URL + "style.css")
+body
+  p
+    A(HREF="./home") Home
+  H1 Scan CritiqueIt for Hands Raised
+  P This page allows you to run the script that sends messages for hands raised. This may take several seconds. You can view the message log <A HREF="messagesLog">here</A>.
+  FORM(method="POST" action="scanForHands" onSubmit="preSubmit();")
+    BUTTON(type='submit') Run
+  P(ID="feedback")= feedback
+
+  script.
+
+    function preSubmit() {
+      var feedback = document.getElementById('feedback');
+      feedback.textContent = "Running script...";      
+    }

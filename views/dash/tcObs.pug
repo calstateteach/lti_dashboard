@@ -1,0 +1,174 @@
+doctype html
+html(lang='en')
+  head
+    title Teacher Candidate Observations Dashboard
+    link(rel="stylesheet", href=APP_URL + "LatoLatin/latolatinfonts.css")
+    link(rel="stylesheet", href=APP_URL + "style.css")
+    link(rel="stylesheet", href=APP_URL + "style_dash_scroll.css")
+    link(rel="stylesheet", href=APP_URL + "obs.css")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+  body
+    block body
+      //- Top level navigation links
+      P
+        if userRoles.includes('dev')
+          A(HREF=APP_URL + "dev/home") Home
+          | &nbsp; | &nbsp;
+          A(HREF=APP_URL + "dev/tcObservationsLinks") Teacher Candidates List
+          | &nbsp; | &nbsp;
+
+        //- Provide link to corresonding modules dashboard
+        A(HREF=APP_URL + "dash/tc/" + user.id + '/mod') Modules Dashboard
+  
+      H1= 'Observations Dashboard for ' + user.name
+
+      each term in userTerms
+        H2= term.name
+        DIV
+          //---------- Fixed table columns
+          DIV(CLASS="fixed_left")
+            TABLE(ClASS="obs_table")
+              THEAD
+                TR
+                  TH
+                    DIV Faculty
+                TR
+              TBODY
+                each student in term.students
+                  TR
+                    TD(CLASS="obs_student_col")
+                      DIV
+                        //- A(HREF= CST_CANVAS_BASE_URL + 'courses/' + term.course_id + '/grades/' + student.id + '#tab-assignments' TARGET="_BLANK")= student.name
+                        if (term.faculty)
+                          =term.faculty.user.name
+
+          //---------- Scrolling table columns
+          //- Client-side JS creates & fills in data columns
+          DIV(CLASS="scrolling_right")
+            TABLE(ClASS="obs_table"  ID="term_" + term.course_id)
+              THEAD
+                TR
+                  TH
+                    DIV Observation Assignments
+                    DIV(CLASS="show-all-control")
+                      -var chkId = 'chkShowAll_' + term.course_id
+                      INPUT(ID=chkId TYPE="checkbox" onclick=`toggleShowAll(${term.course_id}, this.checked)`)
+                      LABEL(FOR=chkId) Show all
+                  TH Final Status
+              TBODY
+                each student in term.students
+                  TR
+                    TD ----
+                      //- BUTTON(STYLE="visibility:hidden" onclick=`showAddForm(${term.course_id}, "CritiqueIt", ${student.id})` disabled=!student.iSupe_course_section_id) iSupervision
+                    TD(ID=`crs_${term.course_id}_sec_${student.iSupe_course_section_id}_stu_${student.id}_final`) ----
+      DIV
+        IMG(SRC=APP_URL + "obs-icons/key.png" CLASS="icons-key")
+      DIV(class="form-sms" STYLE="display:none")
+        P You can receive a text notification when a hand is raised.
+        LABEL(for="phone") Phone: 
+        INPUT(type="tel" id="txtPhone" name="txtPhone" size="12" maxlength="12" placeholder="###-###-####" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}") 
+        BUTTON(type='submit' id='btnSubmitPhone' onclick="submitPhone()") Save number and receive test message
+        | 
+        BUTTON(type='submit' id='btnDeletePhone' onclick="deletePhone()" disabled) Stop notifications
+        DIV
+          DIV(id="phoneFeedback" class="form-sms-feedback") 
+      
+      //- Place to log request errors
+      DIV(ID="divStatus" STYLE="margin-top: 50px; color:red")
+      
+      //- Modal add assignment form
+      DIV(id="addAssDiv", class="modal")
+        FORM(class="modal-content animate" onSubmit="return false;" id="addAssForm")
+          //- SPAN(onclick="document.getElementById('addAssDiv').style.display='none'"
+          SPAN(onclick="cancelAdd()"
+            class="close"
+            title="Close Modal") &times;
+          DIV(class="container")
+            LABEL(ID='lblAdd') Add assignment with name:
+            INPUT(type='text'
+              name='assignmentName'
+              id='assignmentName'
+              required)
+            INPUT(type='hidden' id='studentId' name='studentId' value='')
+            INPUT(type='hidden' id='courseId' name='courseId' value='')
+            INPUT(type='hidden' id='sectionId' name='sectionId' value='')
+            INPUT(type='hidden' id='addType' name='addType' value='')
+            BUTTON(type='submit' id='btnSubmit' onclick="submitAdd()") Submit
+            | &nbsp; &nbsp;
+            //- BUTTON(type='button' onclick="document.getElementById('addAssDiv').style.display='none'" class="cancelBtn" id='btnCancel') Cancel
+            BUTTON(type='button' onclick="cancelAdd()" class="cancelBtn" id='btnCancel') Cancel
+            | &nbsp; &nbsp;
+            //- SPAN(id="waitMsg" class="errMsg" style="visibility:hidden") Adding new assignment... 
+            SPAN(id="waitMsg" class="errMsg" style="display:none") Adding new assignment... 
+              IMG(SRC=APP_URL + "spinner_small.gif")
+            SPAN(id="errMsg" class="errMsg" style="display:none")
+              
+      //- Modal Edit assignment form
+      DIV(id="editAssDiv", class="modal")
+        FORM(class="modal-content animate" onSubmit="return false;" id="addEditForm")
+          SPAN(onclick="cancelEdit()"
+            class="close"
+            title="Close Modal") &times;
+          DIV(class="container")
+            H3(id='editCurrentAssignmentName')
+            LABEL Rename assignment:
+            INPUT(type='text'
+              name='editNewAssignmentName'
+              id='editNewAssignmentName'
+              required)
+            INPUT(type='hidden' id='editCourseId' name='editCourseId' value='')
+            INPUT(type='hidden' id='editAssignmentId' name='editAssignmentId' value='')
+            BUTTON(type='submit' id='btnEditSubmit' onclick="submitEdit()") Submit
+            | &nbsp; &nbsp;
+            BUTTON(type='button' onclick="cancelEdit()" class="cancelBtn" id='btnEditCancel') Cancel
+            | &nbsp; &nbsp;
+            SPAN(id="editWaitMsg" class="errMsg" style="display:none") Updating assignment... 
+              IMG(SRC=APP_URL + "spinner_small.gif")
+            SPAN(id="editErrMsg" class="errMsg" style="display:none")
+            
+      //- Debug stuff
+      if isDevModeOn
+        DIV(STYLE="margin-top:100px")
+          TABLE(CLASS='data')
+            TR
+              TH Property
+              TH Value
+            TR
+              TD userRoles
+              TD= userRoles
+            TR
+              TD userTerms
+              TD
+                PRE= JSON.stringify(userTerms, null, 2)
+            TR
+              TD user
+              TD
+                PRE= JSON.stringify(user, null, 2)
+            //- TR
+            //-   TD courseModules
+            //-   TD
+            //-     PRE= JSON.stringify(courseModules, null, 2)
+          
+          //- Display session data for developers
+          H2 Sever Session
+          TABLE(CLASS='data')
+            each val, key in sessionData
+              tr
+                td(style="font-weight: bold;")= key + ":"
+                if typeof val === 'object'
+                  td
+                    PRE= JSON.stringify(val, null, 2)
+                else
+                  td= val
+      DIV(ID=divStatus)
+
+      //- Stash data for browser scripts
+      DIV(ID="userTerms" STYLE="display:none")!=JSON.stringify(userTerms)
+      DIV(ID="facultyUser" STYLE="display:none")!=JSON.stringify(user)
+      DIV(ID="appLocation" STYLE="display:none")=APP_URL
+      DIV(ID="canvasBaseUrl" STYLE="display:none")=CST_CANVAS_BASE_URL
+      
+      //- Tell browser script that this is a teacher candidate page
+      DIV(ID="tcUser" STYLE="display:none") tcUser
+
+      SCRIPT(SRC=APP_URL + "js/obs.js")

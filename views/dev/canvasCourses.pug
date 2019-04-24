@@ -1,0 +1,22 @@
+doctype html
+html(lang='en')
+  head
+    title Assignment URLs
+    link(rel="stylesheet", href=APP_URL + "LatoLatin/latolatinfonts.css")
+    link(rel="stylesheet", href=APP_URL + "style.css")
+  body
+    p
+      A(HREF="./home") Home
+    H1 Canvas Course List
+    TABLE.data
+      TR
+        TH Index
+        TH Name
+        TH Canvas ID
+        TH sis_course_id
+      for course, index in courses
+        TR
+          TD= index + 1
+          TD= course.name
+          TD(STYLE='text-align:right')= course.id
+          TD= course.sis_course_id

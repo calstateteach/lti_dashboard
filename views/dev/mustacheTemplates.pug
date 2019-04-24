@@ -1,0 +1,32 @@
+doctype html
+html(lang='en')
+ head
+   title CST Dashboard Message Templates
+   link(rel="stylesheet", href=APP_URL + "LatoLatin/latolatinfonts.css")
+   link(rel="stylesheet", href=APP_URL + "style.css")
+   STYLE.
+    PRE {
+      border:1px solid black;
+      padding:10px;
+    }
+body
+  p
+    A(HREF="./home") Home
+  H1 CST Dashboard Message Templates
+  P File: <EM>#{configItem.filePath}</EM>
+  P Last parsed: <EM>#{configItem.timestamp.toLocaleString('en-US')}</EM>
+  H2 Mustache Template Strings
+  TABLE.data
+    TR
+      TH Property
+      TH Value
+    each propertyName in Object.getOwnPropertyNames(configItem.value)
+      TR
+        TD= propertyName
+        TD= configItem.value[propertyName]
+  H2 File Contents
+  PRE= fileData
+  
+  FORM(ACTION='mustacheTemplates' METHOD='POST')
+    INPUT(TYPE='submit' value='Reload templates')
+    INPUT(TYPE='hidden' name='action' value='reload')

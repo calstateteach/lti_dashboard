@@ -1,0 +1,5 @@
+# Mustache templates for SMS messages
+# 07.27.2018 tps Created.
+
+sms_test: "CSU iSupervision for {{{userName}}} will be sent to this number."
+sms_hand_raised: "CSU iSupervision alert for {{{facultyName}}}: {{{studentName}}} has a hand raised in assignment: {{{assignment.name}}}. {{{assignment.html_url}}}"

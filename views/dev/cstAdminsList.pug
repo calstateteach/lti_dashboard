@@ -1,0 +1,22 @@
+doctype html
+html(lang='en')
+  head
+    title CST Dashboard Faculty List
+    link(rel="stylesheet", href="./../LatoLatin/latolatinfonts.css")
+    link(rel="stylesheet", href="./../style.css")
+    STYLE.
+      UL {
+        list-style: none;
+      }
+      LI {
+        margin-bottom: 8px;
+      }
+
+  body
+    p
+      A(HREF=APP_URL +"dev/home") Home
+    H1= "CST-Admins, " + destination + " destination"
+    ul
+      each cstAdmin in cstAdmins
+        li
+          A(HREF=APP_URL + "dev/cstAdminLaunch/" + cstAdmin.id + "?destination=" + destination)= cstAdmin.name

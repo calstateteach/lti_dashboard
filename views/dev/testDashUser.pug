@@ -1,0 +1,167 @@
+doctype html
+html(lang='en')
+  head
+    title CST Dashboard DB Test
+    link(rel="stylesheet", href=APP_URL + "LatoLatin/latolatinfonts.css")
+    link(rel="stylesheet", href=APP_URL + "style.css")
+    STYLE.
+      PRE {
+        padding:10px;
+      }
+  body
+    p
+      A(HREF="./home") Home
+    H1 CST Dashboard DB Test
+    P="Test endpoint " + APP_URL + "api/v0/dashuser/{{Canvas User Id}} for AJAX calls to retrieve & update dashboard user data."
+    
+    TABLE(STYLE="table-layout: fixed; width: 100%;")
+      TR
+        TD(STYLE="vertical-align:top")
+          H2 GET
+          DIV
+            LABEL(FOR="getCanvasUserId") Canvas User ID:
+          DIV
+            INPUT(TYPE="text" ID="getCanvasUserId" VALUE="88" MAXLENGTH="6" STYLE="width:60px")
+          BUTTON(ID="btnGet" ONCLICK="testGet()") GET
+          PRE(ID="getOutput")
+        TD(STYLE="vertical-align:top")
+          H2 PUT
+          DIV
+            LABEL(FOR="canvasUserId") Canvas User ID:
+          DIV
+            INPUT(TYPE="text" ID="canvasUserId" VALUE="88" MAXLENGTH="6" STYLE="width:60px")
+          DIV
+            LABEL(FOR="txtJson") JSON Data:
+          DIV
+            TEXTAREA(ID="txtJson" ROWS="5" COLS="40") { "hiddenObs": [ 100, 101, 102 ] }
+          BUTTON(ID="btnPut" ONCLICK="testPut()") PUT
+          PRE(ID="putOutput")
+        TD(STYLE="vertical-align:top")
+          H2 DELETE
+          DIV
+            LABEL(FOR="delCanvasUserId") Canvas User ID:
+          DIV
+            INPUT(TYPE="text" ID="delCanvasUserId" VALUE="88" MAXLENGTH="6" STYLE="width:60px")
+          BUTTON(ID="btnDel" ONCLICK="testDel()") DELETE
+          PRE(ID="delOutput")
+
+    script.
+
+      // Implement [Enter] on form input fields
+      document.addEventListener("DOMContentLoaded", () => {
+
+        function setEnterEvent(txtInputId, btnId) {
+          // Get the input field
+          var input = document.getElementById(txtInputId);
+
+          // Execute a function when the user releases a key on the keyboard
+          input.addEventListener("keyup", function(event) {
+            // Cancel the default action, if needed
+            event.preventDefault();
+            // Number 13 is the "Enter" key on the keyboard
+            if (event.keyCode === 13) {
+              // Trigger the button element with a click
+              document.getElementById(btnId).click();
+            }
+          });
+        }
+   
+        setEnterEvent("getCanvasUserId", "btnGet");
+        setEnterEvent("delCanvasUserId", "btnDel");
+      }); // End event listener
+
+      function testPut() {
+
+        var httpRequest = new XMLHttpRequest();
+        if (!httpRequest) {
+          alert('Giving up :( Cannot create an XMLHTTP instance');
+          done();
+          return false;
+        }
+
+        const canvasUserId = document.getElementById('canvasUserId').value;
+        const jsonString = document.getElementById('txtJson').value;
+        const apiUrl = '../api/v0/dashUser/' + canvasUserId;
+
+        httpRequest.onreadystatechange = testPutHandler;
+        httpRequest.open('PUT', apiUrl, true);
+        httpRequest.setRequestHeader("Content-type", "application/json");
+        httpRequest.send(jsonString);
+
+        function testPutHandler() {
+          if (httpRequest.readyState === XMLHttpRequest.DONE) {
+            if (httpRequest.status === 200) {
+              const preTag = document.getElementById('putOutput')
+              preTag.textContent =  JSON.stringify(JSON.parse(httpRequest.responseText), null, 2);
+            } else {
+              alert('There was a problem with the request.\nRequest status:' + httpRequest.status);
+            }
+          } // end request ready
+        } // end request handler
+      } // end testPut()
+
+
+      function testGet() {
+
+        var httpRequest = new XMLHttpRequest();
+        if (!httpRequest) {
+          alert('Giving up :( Cannot create an XMLHTTP instance');
+          done();
+          return false;
+        }
+
+        const canvasUserId = document.getElementById('getCanvasUserId').value;
+        const apiUrl = '../api/v0/dashUser/' + canvasUserId;
+
+        httpRequest.onreadystatechange = testGetHandler;
+        httpRequest.open('GET', apiUrl, true);
+        //- httpRequest.setRequestHeader("Content-type", "application/json");
+        //- httpRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        httpRequest.send();
+
+        function testGetHandler() {
+          if (httpRequest.readyState === XMLHttpRequest.DONE) {
+            if (httpRequest.status === 200) {
+              const preTag = document.getElementById('getOutput');
+
+              // Sometimes this fails, but can't figure out the condition yet
+              try {
+                preTag.textContent = JSON.stringify(JSON.parse(httpRequest.responseText), null, 2);
+              } catch (parseErr) {
+                preTag.textContent = parseErr;
+              }
+            } else {
+              alert('There was a problem with the request.\nRequest status:' + httpRequest.status);
+            }
+          } // end request ready
+        } // end request handler
+      } // end testPut()
+
+
+      function testDel() {
+
+        var httpRequest = new XMLHttpRequest();
+        if (!httpRequest) {
+          alert('Giving up :( Cannot create an XMLHTTP instance');
+          done();
+          return false;
+        }
+
+        const canvasUserId = document.getElementById('delCanvasUserId').value;
+        const apiUrl = '../api/v0/dashUser/' + canvasUserId;
+
+        httpRequest.onreadystatechange = testDelHandler;
+        httpRequest.open('DELETE', apiUrl, true);
+        httpRequest.send();
+
+        function testDelHandler() {
+          if (httpRequest.readyState === XMLHttpRequest.DONE) {
+            if (httpRequest.status === 200) {
+              const preTag = document.getElementById('delOutput');
+              preTag.textContent = JSON.stringify(JSON.parse(httpRequest.responseText), null, 2);
+            } else {
+              alert('There was a problem with the request.\nRequest status:' + httpRequest.status);
+            }
+          } // end request ready
+        } // end request handler
+      } // end function

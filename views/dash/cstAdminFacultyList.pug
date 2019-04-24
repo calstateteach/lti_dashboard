@@ -1,0 +1,34 @@
+doctype html
+html(lang='en')
+  head
+    title CST Dashboard Faculty List
+    link(rel="stylesheet", href=APP_URL + "LatoLatin/latolatinfonts.css")
+    link(rel="stylesheet", href=APP_URL + "mod.css")
+    STYLE.
+      UL {
+        columns: 4;
+        list-style: none;
+      }
+      LI {
+        margin-bottom: 8px;
+      }
+
+  body
+    if userRoles.includes('dev')
+      p
+        A(HREF=APP_URL +"dev/home") Home
+        | &nbsp; | &nbsp;
+        A(HREF=APP_URL + "dev/cstAdminList?destination=" + destination) CST-Admin List    
+    H1= "Faculty List for CST-Admin " + cstAdminUser.name
+    if campusCode != '*'
+      H2= campusCode + ' Campus'
+    else
+      H2 All Campuses
+    ul
+      each teacher in teachers
+        li
+          //- Link to either faculty modules (default) or observations dashboard.
+          if destination == "observations"
+            A(HREF=APP_URL + "dash/faculty/" + teacher.id + "/obs")= teacher.name
+          else
+            A(HREF=APP_URL + "dash/faculty/" + teacher.id)= teacher.name
