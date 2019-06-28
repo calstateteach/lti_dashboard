@@ -2,6 +2,7 @@
 05.16.2018 tps Created.
 08.27.2018 tps Record error messages.
 08.30.2018 tps 
+06.25.2019 tps Return file error if there is a problem reading the status file.
 */
 
 const fs = require('fs');
@@ -15,7 +16,9 @@ function currentStatus(callback) {
   fs.readFile(FILE_PATH, 'utf8', (err, data) => {
     // if (err) return callback(err);
     // 08.13.201 tps It's OK if the file doesn't exist yet.
-    if (err) return callback(null, err.toString());
+    // if (err) return callback(null, err.toString());
+    // 06.21.2019 tps Result is expected to be a JSON string. 
+    if (err) return callback(null, JSON.stringify(err));
     return callback(null, data);
   }); // end readFile callback
 }

@@ -1,7 +1,10 @@
 doctype html
 html(lang='en')
   head
-    title Faculty Dashboard
+    if tcUser
+      title Teacher Candidate Module Submissions
+    else
+      title Faculty Dashboard Module Submissions
     link(rel="stylesheet", href=APP_URL + "LatoLatin/latolatinfonts.css")
     link(rel="stylesheet", href=APP_URL + "style.css")
     link(rel="stylesheet", href=APP_URL + "style_module_submissions.css")
@@ -12,7 +15,10 @@ html(lang='en')
       if userRoles.includes('dev')
         A(HREF= APP_URL + "dev/home") Home
         | &nbsp; | &nbsp;
-        A(HREF= APP_URL + "dev/facultyList") Faculty List
+        if tcUser
+          A(HREF= APP_URL + "dev/tcModulesLinks") Teacher Candidates List
+        else
+          A(HREF= APP_URL + "dev/facultyList") Faculty List
         | &nbsp; | &nbsp;
         A(HREF=APP_URL + "dev/cstAdminList?destination=modules") CST-Admin List
         | &nbsp; | &nbsp;
@@ -22,10 +28,16 @@ html(lang='en')
         | &nbsp; | &nbsp;
 
       //- Provide link to corresonding observations dashboard
-      A(HREF=APP_URL + "dash/faculty/" + user.id + "/obs") Observations Dashboard
+      if tcUser
+        A(HREF=APP_URL + "dash/tc/" + user.id + "/obs") Observations Dashboard
+      else
+        A(HREF=APP_URL + "dash/faculty/" + user.id + "/obs") Observations Dashboard
 
     H1
-      A(HREF= APP_URL + "dash/faculty/" + user.id)= 'Modules Dashboard for ' + user.name
+      if tcUser
+        A(HREF= APP_URL + "dash/tc/" + user.id + '/mod')= 'Modules Dashboard for ' + user.name
+      else
+        A(HREF= APP_URL + "dash/faculty/" + user.id)= 'Modules Dashboard for ' + user.name
     each term in userTerms
       H2= term.name
       DIV
@@ -35,14 +47,21 @@ html(lang='en')
             THEAD
               TR
                 TH
-                  DIV Teacher
-                  DIV Candidates
+                  if tcUser
+                    DIV Faculty
+                  else
+                    DIV Teacher
+                    DIV Candidates
             TBODY
               each student in term.students
                 TR
                   TD(CLASS="student_col")
                     DIV
-                      A(HREF= CST_CANVAS_BASE_URL + 'courses/'+ term.course_id + '/grades/' + student.id + '#tab-assignments' TARGET="_BLANK")= student.name
+                      if tcUser
+                        if faculty
+                          =faculty.name
+                      else
+                        A(HREF= CST_CANVAS_BASE_URL + 'courses/'+ term.course_id + '/grades/' + student.id + '#tab-assignments' TARGET="_BLANK")= student.name
 
         //---------- Scrolling table columns
         DIV(CLASS="scrolling_right")
@@ -55,8 +74,11 @@ html(lang='en')
             THEAD
               TR
                 each assignment in moduleAssignments
-                  TH
-                    A(HREF=assignment.html_url TARGET="_blank")= assignment.title
+                  if tcUser
+                    TH= assignment.title
+                  else
+                    TH
+                      A(HREF=assignment.html_url TARGET="_blank")= assignment.title
 
             TBODY
               each student in term.students
@@ -64,9 +86,13 @@ html(lang='en')
                   each assignment in moduleAssignments
                     //- TD(ID= `sec_${term.course_section_id}_ass_${assignment.content_id}_stu_${student.id}`) ----
                     TD(ID= `sec_${term.course_section_id}_ass_${assignment.assignment_id}_stu_${student.id}`) ----
-    P Use <span style="font-weight: bold">SpeedGrader</span> to review teacher candidate work.
+    if !tcUser
+      P Use <span style="font-weight: bold">SpeedGrader</span> to review teacher candidate work.
     H3
-      A(HREF= APP_URL + "dash/faculty/" + user.id) Back to overview
+      if tcUser
+        A(HREF= APP_URL + "dash/tc/" + user.id + '/mod') Back to overview
+      else      
+        A(HREF= APP_URL + "dash/faculty/" + user.id) Back to overview
 
     //- Place to log request errors
     DIV(ID="divStatus" STYLE="margin-top: 50px; color:red")
@@ -101,6 +127,10 @@ html(lang='en')
             TD activity405Url
             TD
               PRE= activity405Url
+          TR
+            TD faculty
+            TD
+              PRE= JSON.stringify(faculty, null, 2)
         //- Display session data for developers
         H2 Sever Session
         TABLE(CLASS='data')
@@ -122,4 +152,8 @@ html(lang='en')
     DIV(ID="canvasBaseUrl" STYLE="display:none")=CST_CANVAS_BASE_URL
     DIV(ID="activity405Url" STYLE="display:none")=activity405Url
 
+    if tcUser
+      //- When displaying for teacher candidates, tell browser script to link to submission detail page instead of SpeedGrader
+      DIV(ID="submissionDetailLink" STYLE="display:none") submissionDetailLink
+    
     SCRIPT(SRC=APP_URL + "js/moduleDetail.js")

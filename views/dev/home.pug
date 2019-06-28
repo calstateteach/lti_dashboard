@@ -8,71 +8,92 @@ HTML(lang="en")
     P
       A(HREF="./home") Home
     H1 CST Dashboard Developer Pages
-    H2 Faculty Dashboards
-    UL
-      LI
-        A(HREF="facultyList") Faculty Modules Pages
-      LI
-        A(HREF="obsFacultyList") Faculty Observations Pages
-    H2 Teacher Candidate Dashboards
-    UL
-      LI
-        A(HREF="tcModulesLinks") Teacher Candidate Modules Pages
-      LI
-        A(HREF="tcObservationsLinks") Teacher Candidate Observations Pages
-    H2 CST-Admin Dashboard
-    UL
-      LI
-        A(HREF="cstAdminList?destination=modules") CST-Admin Modules
-      LI
-        A(HREF="cstAdminList?destination=observations") CST-Admin Observations
-    H2 Developer Test Pages
-    UL
-      LI
-        A(HREF="sessionData") Session Cache
-      LI
-        A(HREF=APP_URL + "LatoLatin/latolatin.html") Lato Web Font
-      LI
-        A(HREF="uuids") UUID Generator
-      LI
-        A(HREF="camUserSearch") CAM User Search
-      LI
-        A(HREF="scanForHands") Scan for Hands Raised
-      LI
-        A(HREF="testNotifications") Test Twilio
-    H2 App Configuration
-    UL
-      LI
-        A(HREF="termsConfig") Terms
-      LI
-        A(HREF="googleAssignmentConfig") Google Assignment Description
-      LI
-        A(HREF="addsConfig") Add Assignments Permissions
-      LI
-        A(HREF="cstAdminsConfig") CST Admins
-      LI
-        A(HREF="assignmentDestinationsConfig") Courses for Assignment Destinations CSV
-      LI
-        A(HREF="mustacheTemplates") Message Templates
-      LI
-        A(HREF="devMode") Developer Mode Setting
-    UL
-      LI='Canvas URL: ' + CST_CANVAS_BASE_URL
-      LI='Term name: ' + TERM_NAME
-    H2 Canvas Data
-    UL
-      LI
-        A(HREF="canvasCache") Canvas Cache
-      LI
-        A(HREF="primeCanvasCache") Prime the Canvas Cache
-      LI
-        A(HREF="canvasCourses") Canvas Course List
-      LI
-        A(HREF="assignmentUrls") Assignment URLs Extraction
-    H2 Dashboard Data
-    UL
-      LI
-        A(HREF="messagesLog") Twilio Messages Log
-      LI
-        A(HREF="testDashUser") Dashboard Users DB
-
+    TABLE(STYLE="width:100%")
+      TR
+        TD(STYLE="vertical-align: top; width:50%;")
+          H2 Faculty Dashboards
+          UL
+            LI
+              A(HREF="facultyList") Faculty Modules Pages
+            LI
+              A(HREF="obsFacultyList") Faculty Observations Pages
+          H2 Teacher Candidate Dashboards
+          UL
+            LI
+              A(HREF="tcModulesLinks") Teacher Candidate Modules Pages
+            LI
+              A(HREF="tcObservationsLinks") Teacher Candidate Observations Pages
+          H2 CST-Admin Dashboard
+          UL
+            LI
+              A(HREF="cstAdminList?destination=modules") CST-Admin Modules
+            LI
+              A(HREF="cstAdminList?destination=observations") CST-Admin Observations
+          H2 App Configuration
+          UL
+            LI
+              A(HREF="termsConfig") Terms
+            LI
+              A(HREF="googleAssignmentConfig") Google Assignment Description
+            LI
+              A(HREF="addsConfig") Add Assignments Permissions
+            LI
+              A(HREF="cstAdminsConfig") CST Admins
+            LI
+              A(HREF="assignmentDestinationsConfig") Courses for Assignment Destinations CSV
+            LI
+              A(HREF="mustacheTemplates") Message Templates
+            LI
+              A(HREF="devMode") Developer Mode Setting
+            LI Canvas URL: 
+              SPAN(STYLE="font-weight:bold;")= CST_CANVAS_BASE_URL
+            LI='Term name: ' + TERM_NAME
+          H2 Developer Test Pages
+          UL
+            LI
+              A(HREF="sessionData") Session Cache
+            LI
+              A(HREF=APP_URL + "LatoLatin/latolatin.html") Lato Web Font
+            LI
+              A(HREF="uuids") UUID Generator
+            LI
+              A(HREF="camUserSearch") CAM User Search
+            //- LI
+            //-   A(HREF="scanForHands") Scan for Hands Raised
+            LI
+              A(HREF="testNotifications") Test Twilio
+        TD(STYLE="vertical-align: top; width:50%")
+          H2 Google Merge Configuration
+          UL
+            LI
+              A(HREF= "https://docs.google.com/document/d/" + process.env.GOOGLE_TEMPLATE_DOC_ID + "/view" TARGET="_blank" ) Google Merge Template
+                IMG(SRC="../external-link-30.png" STYLE="width:15x; height:15px;")
+            LI Target folder for merged documents: 
+              SPAN(STYLE="font-weight:bold;")= process.env.GOOGLE_DRIVE_MERGE_FOLDER
+            LI Copy template to Google Drive of 
+              if process.env.GOOGLE_TEST_ACCOUNT
+                SPAN(STYLE="font-weight:bold;")= process.env.GOOGLE_TEST_ACCOUNT
+              else
+                |dashboard user
+          H2 Canvas Data
+          UL
+            LI
+              A(HREF="canvasCache") Canvas Cache
+            LI
+              A(HREF="primeCanvasCache") Prime the Canvas Cache
+            LI
+              A(HREF="canvasCourses") Canvas Course List
+            LI
+              A(HREF="assignmentUrls") Assignment URLs Extraction
+          H2 Dashboard Data
+          UL
+            LI
+              A(HREF="messagesLog") Twilio Messages Log
+            LI
+              A(HREF="testDashUser") Dashboard Users DB
+          H2 Test Pages
+          UL
+            LI
+              A(HREF="http://isuper-status-mockup.s3-website-us-west-1.amazonaws.com/") Static demo observations page
+            LI
+              A(HREF="../csswork/nestedtableswork.html") Static demo dashboard layout with scrollers

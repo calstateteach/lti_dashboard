@@ -11,6 +11,9 @@
 // 11.08.2018 tps Try to speed up initial population of page.
 // 12.20.2018 tps Add behavior for displaying page for a teacher candidate.
 //                True value for window.CST.tcUser indicates user is a teacher candidate.
+// 05.15.2019 tps Add buttons to create Google Docs.
+// 05.29.2019 tps Add handling for Google Docs merge.
+// 05.03.2019 tps Disable merge button if no CritiqueIt data.
 
 // Wait for DOM to load before trying to read dashboard framework data
 document.addEventListener("DOMContentLoaded", initGlobals);
@@ -376,6 +379,17 @@ function createObsDiv(courseId, assignment, isEyeToggle) {
   statusIconsContainer.id = `crs_${courseId}_ass_${assignment.id}`;
   statusContainer.appendChild(statusIconsContainer);
 
+  // 05.15.2019 tps Add DIV for merge button
+  const buttonContainer = document.createElement('div');
+
+  const btn1 = document.createElement('input');
+  btn1.id = `crs_${courseId}_ass_${assignment.id}_merge_btn`; // So we can disable it if no merge data.
+  btn1.type = 'button';
+  btn1.value = 'Share Lesson Frame';
+  btn1.onclick = function() { return showCreateGDocForm(assignment.course_id, assignment, assignment.name);};
+  buttonContainer.appendChild(btn1);
+
+  containerDiv.appendChild(buttonContainer);
   return containerDiv;
 }
 
@@ -399,6 +413,13 @@ function populateAssignmentStatusDiv(courseId, assignment) {
     }
     addHandRaised(div, critiqueItAssignment.handRaised, critiqueItAssignment.isObservationOpen);
   }
+
+  // Disable the Google Doc merge button if there's no assignment data to merge.
+  const btnId = divId + '_merge_btn';
+  const btn = document.getElementById(btnId);
+  if (btn) {
+    btn.disabled = isEmpty(assignment.critiqueit_data.data);
+  }
 }
 
 
@@ -421,16 +442,12 @@ function getCritiqueItStatus(courseId, assignment, done) {
       if (httpRequest.status === 200) {
         // alert(httpRequest.responseText);
         var critiqueItAssignment = JSON.parse(httpRequest.responseText);
- 
+
         // Cache the retrieved CritiqueIt data with its corresponding assignment object
         // so it's there the next time we need to display assignment data.
         // It's possible that no CritiqueIt record exists for this assignment yet,
         // in which case supply default values.
-        assignment.critiqueit_data = {
-          stages: (critiqueItAssignment.stages || null),
-          handRaised: (critiqueItAssignment.handRaised === undefined ? false : critiqueItAssignment.handRaised),
-          isObservationOpen: (critiqueItAssignment.isObservationOpen === undefined ? true : critiqueItAssignment.isObservationOpen),
-        };
+        assignment.critiqueit_data = createCritiqueItCacheObject(critiqueItAssignment);
 
         // Populate the DOM with retrieved CritiqueIt data.
         populateAssignmentStatusDiv(courseId, assignment);
@@ -443,6 +460,19 @@ function getCritiqueItStatus(courseId, assignment, done) {
     } // end request ready
   } // end request handler
 } // end function
+
+/** 
+ * Utility function to populate an object for local storage containing relevant
+ * fields from a CritiqueIt assignment object.
+ */
+function createCritiqueItCacheObject(critiqueItAssignment) {
+  return {
+    stages: (critiqueItAssignment.stages || null),
+    handRaised: (critiqueItAssignment.handRaised === undefined ? false : critiqueItAssignment.handRaised),
+    isObservationOpen: (critiqueItAssignment.isObservationOpen === undefined ? true : critiqueItAssignment.isObservationOpen),
+    data: critiqueItAssignment  // 05.29.2019 tps Google Doc merge requires the whole assignment object.
+  };
+}
 
 
 /** Populate page when it first loads by
@@ -491,11 +521,13 @@ function populateISupeCourse(iSupeCourseId, done) {
               // so it's there the next time we need to display assignment data.
               // It's possible that no CritiqueIt record exists for this assignment yet,
               // in which case supply default values.
-              assignment.critiqueit_data = {
-                stages: (critiqueItAss.stages || null),
-                handRaised: (critiqueItAss.handRaised === undefined ? false : critiqueItAss.handRaised),
-                isObservationOpen: (critiqueItAss.isObservationOpen === undefined ? true : critiqueItAss.isObservationOpen),
-              };            
+              assignment.critiqueit_data = createCritiqueItCacheObject(critiqueItAss);
+              // assignment.critiqueit_data = {
+              //   stages: (critiqueItAss.stages || null),
+              //   handRaised: (critiqueItAss.handRaised === undefined ? false : critiqueItAss.handRaised),
+              //   isObservationOpen: (critiqueItAss.isObservationOpen === undefined ? true : critiqueItAss.isObservationOpen),
+              //   data: critiqueItAss   // Google doc merge requires the entire assignment object.
+              // };            
             } // end loop through assignments
           } // end loop through students
 
@@ -568,6 +600,7 @@ function addStageIcons(parentElement, critiqueItAssignment) {
 
 
 function addHandRaised(parentElement, isHandRaised, isObservationOpen) {
+  return; // 05.28.2019 tps Remove icon for faculty demo
   const handRaisedImg = document.createElement('img');
   const handRaisedSrc = window.CST.appLocation 
     + 'obs-icons/hand_' 
@@ -869,7 +902,7 @@ function showAddForm(courseId, addType, studentId) {
   look like "abcdef-1", "abcdef-2" etc.
   */
  
-  // Make is easy to lookup existing assignment names
+  // Make it easy to lookup existing assignment names
   const term = window.CST.terms.find( e => e.course_id === courseId);
   const student = term.students.find( e => e.id === studentId);
   const assignmentNames = student.assignment_overrides.map( e => { return e.name; });
@@ -1238,4 +1271,303 @@ function deletePhone() {
     var btnDelete = document.getElementById('btnDeletePhone');
     btnDelete.disabled = true;
   });
+}
+
+
+/******************** Create Google Doc Functions ********************/
+
+function showCreateGDocForm(iSupeCourseId, assignment, docName) {
+
+  // Find name of teacher candidate, to pass to merge template
+  var candidateName = '';
+  for(var term of window.CST.terms) {
+    for (var student of term.students) {
+      var foundAssignment = student.assignment_overrides.find( e => e.id === assignment.id);
+      if (foundAssignment) {
+        candidateName = student.name;
+      }
+    }
+  }
+  
+  // Modal add form behavior:
+  // 05.29.2019 tps Modal behavior experiment: Clicking [Esc] closes the form
+  var modal = document.getElementById('createGDocDiv');
+  document.onkeyup = function(evt) {
+    if (modal.style.display === 'block') {
+      var key = event.key || event.keyCode; // Cover old, old browsers
+      if (key === 'Escape' || key === 'Esc' || key === 27) {
+        cancelCreateGDoc();
+        return true;
+      }
+    }
+  }
+
+  // // When the user clicks anywhere outside of the modal form, close it
+  // var modal = document.getElementById('createGDocDiv');
+  // window.onclick = function(event) {
+
+  //   if (event.target == modal) {
+  //     modal.style.display = "none";
+
+  //     // Clear any error messages
+  //     document.getElementById('createGDocErrMsg').style.display = "none";
+  //   }
+  // }
+
+  // Populate data form with values we'll need to submit the request.
+  document.getElementById('createGDocName').value = docName;
+  document.getElementById('createGDocAssignmentId').value = assignment.id;
+  document.getElementById('createGDocCourseId').value = iSupeCourseId;
+  document.getElementById('createGDocAssJson').value = JSON.stringify(assignment.critiqueit_data.data);
+  document.getElementById('createGDocCandidateName').value = candidateName;
+
+  // Display modal form
+  modal.style.display = 'block';
+  document.getElementById('createGDocName').focus();
+}
+
+
+function cancelCreateGDoc() {
+  document.getElementById('createGDocDiv').style.display='none';
+  document.getElementById('createGDocErrMsg').style.display = "none";   // Clear error messages
+}
+
+
+function submitCreateGDoc() {  
+
+  // Clear any previous error message.
+  const errMsg = document.getElementById('createGDocErrMsg')
+  errMsg.style.display = "none";
+
+  // Don't bother if user didn't specify a document name
+  const docName = document.getElementById('createGDocName').value.trim();
+  if (docName === '') return false;
+
+  // Disable form so over-excited user can't keep creating the same document.
+  document.getElementById('btnCreateGDocSubmit').disabled = true;
+  document.getElementById('btnCreateGDocCancel').disabled = true;
+
+  document.getElementById('createGDocWaitMsg').style.display = "inline";  // Why do this?
+
+  // Gather the form data we'll need to create the Google Doc.
+  var postString = 'docName=' + encodeURIComponent(docName)
+    + '&targetEmail=' + encodeURIComponent(window.CST.facultyUser.login_id)
+    + '&candidateName=' + encodeURIComponent(document.getElementById('createGDocCandidateName').value)
+    + '&data=' + encodeURIComponent(document.getElementById('createGDocAssJson').value)
+
+  var httpRequest = new XMLHttpRequest();
+  if (!httpRequest) {
+    alert('Giving up :( Cannot create an XMLHTTP instance');
+    done();
+    return false;
+  }
+
+  httpRequest.onreadystatechange = createGDocHandler;
+  httpRequest.open('POST', window.CST.appLocation + 'api/v0/google/drive/doc', true);
+  httpRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+  httpRequest.send(postString);
+
+  function createGDocHandler() {
+    if ((httpRequest.readyState === XMLHttpRequest.DONE) && (httpRequest.status === 200)) {
+
+      // Reset the modal form
+      document.getElementById('btnCreateGDocCancel').disabled = false;
+      document.getElementById('btnCreateGDocSubmit').disabled = false;
+      document.getElementById('createGDocWaitMsg').style.display = "none";
+      document.getElementById('createGDocDiv').style.display='none';
+      document.getElementById('createGDocErrMsg').style.display = "none"; // Clear any error messages
+      
+      var response = JSON.parse(httpRequest.responseText);
+      if (response.errDuplicateName) {
+        // Handle duplicate document name
+        showDupeGDoc(confirmHandler);
+      } else if (response.errGoogleApi) {
+        // Handle unexpected Google API error
+        showErrDialog({ textContent: JSON.stringify(response.errGoogleApi, null, 2) }, function() {} );
+      } else {
+        // Show link to resulting document
+        showCreateGDocResultForm(httpRequest.responseText);
+      }
+    } // end request ready
+  } // end request handler
+}
+
+// Handle user choice when there is a duplicate Google Doc name.
+function confirmHandler(isOk) {
+
+  var createGDocModal = document.getElementById('createGDocDiv');
+  var inputField = document.getElementById('createGDocName');
+
+  if (isOk) {
+    // User wants to try using suggested document name to avoid duplicate doc names
+    
+    // Grab suggested document name from the duplicate name form
+    var suggestedNameNode = document.getElementById('dupeGDocNameSuggested');
+    var suggestedName = suggestedNameNode.textContent;
+    inputField.value = suggestedName;
+
+    // Re-run the create document form
+    closeOnEscapeKeypress(createGDocModal, cancelCreateGDoc);
+    createGDocModal.style.display = 'block';
+    submitCreateGDoc();
+  } else {
+    // User doesn't want to use suggested name.
+    // Return user to the create doc form's previous state
+    closeOnEscapeKeypress(createGDocModal, cancelCreateGDoc);
+    createGDocModal.style.display = 'block';
+    inputField.focus();
+  }
+} // end function
+
+
+/******************** Create Google Doc Result Functions ********************/
+
+function showCreateGDocResultForm(resultText) {
+
+  // Modal add form behavior:
+  // 05.29.2019 tps Modal behavior experiment: Clicking [Esc] closes the form
+  var modal = document.getElementById('createGDocResultDiv');
+  closeOnEscapeKeypress(modal, cancelCreateGDocResult);
+
+  // Populate form with document creation result.
+  // document.getElementById('createGDocResultTextArea').value = resultText;
+
+  // Link to new document
+  var result = JSON.parse(resultText);
+  var anchor = document.getElementById('createGDocResultLink');
+  var link = result.docLink;
+  anchor.href = link;
+  anchor.text = link;
+
+  // Say stuff about the new document
+  var contentDiv = document.getElementById('createGDocResultText');
+  var textContent = `Created Google Doc "${result.docName}" in folder "${result.folderName}"`;
+  contentDiv.textContent = textContent;
+
+  // Display modal form
+  modal.style.display = 'block';
+  document.getElementById('btnCreateGDocResultCancel').focus(); // [Enter] closes modal
+}
+
+
+function cancelCreateGDocResult() {
+  document.getElementById('createGDocResultDiv').style.display='none';
+}
+
+
+/******************** Google Doc Duplicate Name Functions ********************/
+
+function showDupeGDoc(callback) {
+/*
+callback signature: (result)
+  result is boolean true if user selects "OK"
+  result is boolean false if user selects "Cancel"
+*/
+
+  var modal = document.getElementById('dupeGDocDiv');
+
+  function hideDupeGDoc() {
+    modal.style.display='none';
+  }
+  
+  function okHandler() {
+    hideDupeGDoc();
+    callback(true);
+  }
+
+  function cancelHandler() {
+    hideDupeGDoc();
+    callback(false);
+  }
+
+  // Wire up buttons to callback
+  var okButton = document.getElementById('btnDupeGDocSubmit');
+  okButton.onclick = okHandler;
+
+  var cancelButton = document.getElementById('btnDupeGDocCancel');
+  cancelButton.onclick = cancelHandler;
+
+  var crossSpan = document.getElementById('dupeGDocCross');
+  crossSpan.onclick = cancelHandler;
+
+  // Clicking [Esc] closes the form
+  closeOnEscapeKeypress(modal, cancelHandler);
+
+  // Populate feedback form
+
+  // Grab document name that didn't work from the create Google Doc form
+  var docNameInput = document.getElementById('createGDocName');
+  var docName = docNameInput.value;
+  var dupeNameNode = document.getElementById('dupeGDocNameExists');
+  dupeNameNode.textContent = docName;
+  var suggestedNameNode = document.getElementById('dupeGDocNameSuggested');
+  suggestedNameNode.textContent = docName + ' ' + (new Date()).toLocaleDateString('en-US');
+
+  // var textNode = document.getElementById('dupeGDocTextContent');
+  // textNode.textContent = options.textContent;
+  // // var suggestedName = dupeDocName + ' ' + (new Date()).toLocaleDateString('en-US');
+  // textNode.textContent = `A document named: "${dupeDocName}" already exists. Would you like to try the name: "${suggestedName}" instead?`;
+
+  // Display modal form
+  modal.style.display = 'block';
+  okButton.focus(); // [Enter] is [Yes]
+}
+
+
+/******************** Error Modal Dialog Functions ********************/
+
+function showErrDialog(options, callback) {
+  // callback signature: ()
+
+  var modal = document.getElementById('errDialogDiv');
+
+  function hideModal() {
+    modal.style.display='none';
+    callback();
+  }
+  
+  // Wire up buttons to callback
+  var okButton = document.getElementById('btnErrDialogSubmit');
+  okButton.onclick = hideModal;
+
+  var crossSpan = document.getElementById('errDialogCross');
+  crossSpan.onclick = hideModal;
+
+  // Clicking [Esc] closes the form
+  closeOnEscapeKeypress(modal, hideModal);
+
+  // Populate feedback form
+
+  // Grab document name that didn't work from the create Google Doc form
+  var textContentNode = document.getElementById('errDialogTextContent');
+  textContentNode.textContent = options.textContent;
+
+  // Display modal form
+  modal.style.display = 'block';
+  okButton.focus();
+}
+
+/******************** Utility Functions ********************/
+
+function closeOnEscapeKeypress(modal, callback) {
+  // callback signature: ()
+  document.onkeyup = function(evt) {
+    if (modal.style.display === 'block') {
+      var key = evt.key || evt.keyCode; // Cover old, old browsers
+      if (key === 'Escape' || key === 'Esc' || key === 27) {
+        callback();
+        return true;
+      }
+    }
+  }
+}
+
+// Test for an empty object, e.g. {}
+function isEmpty(obj) {
+  for(var prop in obj) {
+    if(obj.hasOwnProperty(prop)) {
+      return false;
+    }
+  }
+  return true;
 }

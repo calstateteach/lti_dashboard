@@ -1,7 +1,7 @@
 doctype html
 html(lang='en')
   head
-    title Faculty Dashboard
+    title= (tcUser ? "Teacher Candidate" : "Faculty") + " Modules Dashboard"
     link(rel="stylesheet", href=APP_URL + "LatoLatin/latolatinfonts.css")
     link(rel="stylesheet", href=APP_URL + "mod.css")
     meta(name="viewport" content="width=device-width, initial-scale=1.0")
@@ -12,7 +12,10 @@ html(lang='en')
         if userRoles.includes('dev')
           A(HREF=APP_URL + "dev/home") Home
           | &nbsp; | &nbsp;
-          A(HREF=APP_URL + "dev/facultyList") Faculty List
+          if tcUser
+            A(HREF=APP_URL + "dev/tcModulesLinks") Teacher Candidates List
+          else
+            A(HREF=APP_URL + "dev/facultyList") Faculty List
           | &nbsp; | &nbsp;
           A(HREF=APP_URL + "dev/cstAdminList?destination=modules") CST-Admin List
           | &nbsp; | &nbsp;
@@ -22,13 +25,16 @@ html(lang='en')
           | &nbsp; | &nbsp;
       
         //- Provide link to corresonding observations dashboard
-        A(HREF=APP_URL + "dash/faculty/" + user.id + "/obs") Observations Dashboard
+        if tcUser
+          A(HREF=APP_URL + "dash/tc/" + user.id + "/obs") Observations Dashboard
+        else
+          A(HREF=APP_URL + "dash/faculty/" + user.id + "/obs") Observations Dashboard
 
       //- Figure out which add buttons are enabled.
       //- If not configuration item found, go with default of just Google enabled.
-      - const buttonConfig = addConfig.find( e => e.email === user.login_id)
-      - const isGoogleEnabled = buttonConfig ? (buttonConfig.enable_Google == 1) : true
-      - const isCritiqueItEnabled = buttonConfig && (buttonConfig.enable_iSupervision == 1)
+      //- - const buttonConfig = addConfig.find( e => e.email === user.login_id)
+      //- - const isGoogleEnabled = buttonConfig ? (buttonConfig.enable_Google == 1) : true
+      //- - const isCritiqueItEnabled = buttonConfig && (buttonConfig.enable_iSupervision == 1)
 
       H1= 'Modules Dashboard for ' + user.name
 
@@ -43,15 +49,22 @@ html(lang='en')
               THEAD
                 TR
                   TH
-                    DIV Teacher
-                    DIV Candidates
+                    if tcUser
+                      DIV Faculty
+                    else
+                      DIV Teacher
+                      DIV Candidates
                 TR
               TBODY
                 each student in term.students
                   TR
                     TD(CLASS="student_col")
                       DIV
-                        A(HREF= CST_CANVAS_BASE_URL + 'courses/' + term.course_id + '/grades/' + student.id + '#tab-assignments' TARGET="_BLANK")= student.name
+                        if tcUser
+                          if term.faculty
+                            =term.faculty.user.name
+                        else
+                          A(HREF= CST_CANVAS_BASE_URL + 'courses/' + term.course_id + '/grades/' + student.id + '#tab-assignments' TARGET="_BLANK")= student.name
 
           //---------- Scrolling table columns
           DIV(CLASS="scrolling_right")
@@ -212,4 +225,9 @@ html(lang='en')
       DIV(ID="appLocation" STYLE="display:none")=APP_URL
       DIV(ID="canvasBaseUrl" STYLE="display:none")=CST_CANVAS_BASE_URL
 
+      //- Tell browser script that this is a teacher candidate page
+      if tcUser
+        DIV(ID="tcUser" STYLE="display:none") tcUser
+      
       SCRIPT(SRC=APP_URL + "js/dash.js")
+      

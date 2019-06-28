@@ -4,6 +4,7 @@ API implemented by Julian Poyourow.
 07.03.2018 tps Add call for retrieving assignment by canvas assignment ID.
 03.29.2019 tps Replace tiny-json-http package with request-json package, because
   of obscure compability issue with Canvas API.
+05.09.2019 tps Fix bad callback return missing error object from API call.
 */
 
 // const tiny = require('tiny-json-http');
@@ -35,12 +36,12 @@ function get(apiEndpoint, callback) {
     (err, response, body) => {
       if (err) {
         // Mostly likely error is requesting non-existent data
-        if (response.statusCode) {
+        if (response && response.statusCode) {
           console.log((new Date()).toLocaleString('en-US') + `: Got ${response.statusCode} "${body}" from ${endpointUrl}`);
         } else {
-          console.log((new Date()).toLocaleString('en-US') + ': ' + err.message);
+          console.log((new Date()).toLocaleString('en-US') + `: Got error from ${endpointUrl}: ${err.message}`);
         }
-        return callback(body);
+        return callback(err, body);
       }
 
       // I don't see a status field in the header.

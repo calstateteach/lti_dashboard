@@ -10,6 +10,7 @@
 // 01.30.2019 tps Replace rubric average with status box image.
 // 02.27.2019 tps Identify module's grading assignment by name rather than position.
 // 03.22.2019 tps Fix status color for case of graded assignment being reset to no grade.
+// 05.09.2019 tps Abbreviate incomplete/complete grade labels.
 
 // Wait for DOM to load before trying to read dashboard framework data
 document.addEventListener("DOMContentLoaded", initGlobals);
@@ -199,8 +200,15 @@ function getSubmissionsByStudent(termCode, sectionId, studentId, done) {
 
               // Save grade of last submission in the module.
               // if (i >= (module.items.length - 1)) {
-                moduleGrade = submission.grade;
+                // moduleGrade = submission.grade;
                 // console.log('grabbed last grade', moduleGrade);
+
+                // 05.09.2019 tps Abbreviate complete/incomplete grade label
+                if (['complete', 'incomplete'].includes(submission.grade)) {
+                  moduleGrade = submission.grade.substr(0, 3).toUpperCase();
+                } else {
+                  moduleGrade = submission.grade;
+                }
 
                 // 01.30.2010 tps Check if all the rubric assessments have been filled out.
                 if (assignment.has_rubric) {

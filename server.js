@@ -18,6 +18,7 @@
 05.26.2018 tps Load configuration item for DEV_MODE.
 07.26.2018 tps Start timer to scan for hands raised.
 08.13.2018 tps Load a globally available term name.
+06.03.2019 tps Remove scan for hands raised in CritiqueIt. This feature no longer needed. 
 */
 require('dotenv').config();
 const async = require('async');
@@ -108,13 +109,13 @@ function preflightDone(err) {
   const timer = require('./libs/canvasCacheTimer').start();
 
   // Start timer to scan for hands
-  const scanForHandsTimer = require('./libs/scanForHandsTimer').start();
+  // const scanForHandsTimer = require('./libs/scanForHandsTimer').start();
 
   // Handle ^C during development?
   process.on('SIGINT', function () {
     console.log("Caught interrupt signal");
     clearInterval(timer);
-    clearInterval(scanForHandsTimer);
+    // clearInterval(scanForHandsTimer);
     dbConnection.close(); // Does this execute?
     process.exit();
   });

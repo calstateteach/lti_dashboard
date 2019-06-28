@@ -1,6 +1,7 @@
 /* Styles for modules dashboard.
 08.19.2018 tps Created to supercede style.css & style_dash_scroll.css.
 08.30.2018 tps Added style for modules key graphic.
+05.09.2019 tps Widen cells to fit INC/COM grade labels.
 */
 
 body {
@@ -92,10 +93,8 @@ TABLE.dash_table TD.student_col {
 /* -------------- Module Cell --------------------*/
 
 .mod-status-container {
-    width: 132px;
-    /* width: 126px; */
-    /* height: 34px; */
-    /* margin-left: 24px; */
+  width: 144px;  
+  /* width: 132px; */
     margin-top: -1px;
     /* padding-left: 12px; */
   }

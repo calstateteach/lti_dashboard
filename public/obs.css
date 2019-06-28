@@ -159,6 +159,7 @@ TD.obs_student_col {
 .form-sms {
   margin-top: 60px;
   text-align: center;
+  display: none; /* 05.28.2019 tps Hide for faculty demo */
 }
 
 .form-sms-feedback {
