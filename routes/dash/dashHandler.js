@@ -20,6 +20,7 @@ TODO:
 08.13.2018 tps Refactor for structure of fall 2018 courses.
 08.13.2018 tps We don't need to handle iSupervision courses on this page anymore.
 04.16.2019 tps Don't allow CST-Admin to view faculty not in their campus.
+09.10.2019 tps Bug fix to handle unpublished modules.
 */
 
 // ******************** Module Imports ********************//
@@ -152,9 +153,19 @@ function get(req, res) {
     /**
      * For each course, populate with the grade module, which is assumed to be the
      * final module in the Canvas course.
+     * 09.10.2019 tps Bug fix. Don't pick a module that is unpublished. Assume there is 
+     *                at least 1 published module.
      */
     const courseModules = canvasCache.getCourseModules(term.course_id);
-    term.grade_module = courseModules[courseModules.length - 1];
+    // term.grade_module = courseModules[courseModules.length - 1];
+    let lastModule = null;
+    for (let i = courseModules.length - 1; i >= 0; --i) {
+      if (courseModules[i].published) {
+        lastModule = courseModules[i];
+        break;
+      }
+    }
+    term.grade_module = lastModule;
 
   } // End loop through faculty member's terms.
   

@@ -13,6 +13,7 @@
 07.13.2018 tps Add redirect to observations page faculty list.
 08.24.2018 tps Fix destination error message.
 12.17.2018 tps Refactor lookup of Web user's role, in preparation for adding student dashboard page.
+12.13.2019 tps Add destination for My RICA Folder Copy page.
 */
 
 // const async = require('async');
@@ -62,6 +63,11 @@ function launchLti(req, res) {
 
 
       if (!emailLogin) return res.render('dev/err', { err: "No email login found in LTI post."});
+
+      // Destination may be the My RICA Folder copy page
+      if (refererDestination && (refererDestination === 'mod7filecopy')) {
+        return res.redirect('tools/Mod7FileCopy.html');
+      }
 
       // The only valid non-null referrer destination is "observations"
       if (refererDestination && (refererDestination != 'observations')) {

@@ -2,10 +2,13 @@
 periodically check the oldest data in the disk cache
 and prime the cache if it is too old.
 01.24.2018 tps Moved into its own module
+10.21.2019 tps Run new cache primer that includes restored access data.
 */
 
 const moduleCache = require('./moduleCache');
-const cachePrimer = require('./cachePrimer');
+// const cachePrimer = require('./cachePrimer');
+const cachePrimer = require('./cacheSemestersPrimer');
+
 
 //******************** Exports ********************//
 const TIMER_INTERVAL_MS = 1000 * 60 * 60 * 1;   // 1 hour

@@ -10,13 +10,13 @@ html(lang='en')
     H1 Canvas Course List
     TABLE.data
       TR
-        TH Index
+        //- TH Index
         TH Name
         TH Canvas ID
         TH sis_course_id
       for course, index in courses
         TR
-          TD= index + 1
+          //- TD= index + 1
           TD= course.name
           TD(STYLE='text-align:right')= course.id
           TD= course.sis_course_id

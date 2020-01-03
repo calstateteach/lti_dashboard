@@ -6,6 +6,7 @@
 // 10.05.2018 tps Submission text matches color coding in summary page.
 // 11.01.2018 tps Add "Annotation" link to iSupervision version of assignment "Activity 4.05"
 // 01.01.2019 tps Fix asterisk display.
+// 09.13.2019 tps For Fall 2019, remove "Annotion" link for Activity 4.05 assignment.
 
 // Wait for DOM to load before trying to read dashboard framework data
 document.addEventListener("DOMContentLoaded", initGlobals);
@@ -108,7 +109,6 @@ function getSubmissionsByStudent(courseId, sectionId, studentId, done) {
               link = `${window.CST.canvasBaseUrl}courses/${courseId}/assignments/${submission.assignment_id}/submissions/${submission.user_id}`;
             }
 
-
             //- 05.11.2018 tps Special handling: If a Term 1 or Term 1B assignment is called "Activity 4.05",
             //- send user to special assignment URL instead of to the speed grader.
             // const submissionAssignment = courseAssignments.find( e => e.content_id === submission.assignment_id);
@@ -117,28 +117,30 @@ function getSubmissionsByStudent(courseId, sectionId, studentId, done) {
             //   link = `${window.CST.canvasBaseUrl}courses/206/assignments/3984`;
             // }
 
-            // 08.22.2018 tps For fall 2018, special handling for Activity 4.05 assignment.
-            // If the assignment is called "Activity 4.05", instead of creating link to the submission,
-            // use a link to an assignment called "Activity 4.05" in the iSupervision course.
-            // The link, if any, has been pre-fetched into the the page.
-            const submissionAssignment = courseAssignments.find( e => e.assignment_id === submission.assignment_id); 
-            if (submissionAssignment.title === "Activity 4.05") {
-              // Add Activity 4.05 link to iSupervision version of the assignment
-              const annotationAnchor = document.createElement('A');
-              annotationAnchor.href = window.CST.activity405Url;
-              annotationAnchor.target = '_BLANK';
+            // // 08.22.2018 tps For fall 2018, special handling for Activity 4.05 assignment.
+            // // If the assignment is called "Activity 4.05", instead of creating link to the submission,
+            // // use a link to an assignment called "Activity 4.05" in the iSupervision course.
+            // // The link, if any, has been pre-fetched into the the page.
+            // const submissionAssignment = courseAssignments.find( e => e.assignment_id === submission.assignment_id); 
+            // if (submissionAssignment.title === "Activity 4.05") {
+            //   // Add Activity 4.05 link to iSupervision version of the assignment
+            //   const annotationAnchor = document.createElement('A');
+            //   annotationAnchor.href = window.CST.activity405Url;
+            //   annotationAnchor.target = '_BLANK';
 
-              const annotationLabel = document.createElement('DIV');
-              annotationLabel.textContent = 'Annotation';
-              annotationLabel.className = 'speedgrader_label'
-              annotationLabel.style.marginBottom = '12px';
-              annotationAnchor.appendChild(annotationLabel);
+            //   const annotationLabel = document.createElement('DIV');
+            //   annotationLabel.textContent = 'Annotation';
+            //   annotationLabel.className = 'speedgrader_label'
+            //   annotationLabel.style.marginBottom = '12px';
+            //   annotationAnchor.appendChild(annotationLabel);
             
-              td.appendChild(annotationAnchor);
+            //   td.appendChild(annotationAnchor);
 
-              // Build Activity 4.05 link to SpeedGrader for Term 1 version of assignment
-              // link = `${window.CST.canvasBaseUrl}courses/${window.CST.activity405iSupe.course_id}/gradebook/speed_grader?assignment_id=${window.CST.activity405iSupe.assignment_id}#%7B%22student_id%22%3A%22${studentId}%22%7D`;
-            }
+            //   // Build Activity 4.05 link to SpeedGrader for Term 1 version of assignment
+            //   // link = `${window.CST.canvasBaseUrl}courses/${window.CST.activity405iSupe.course_id}/gradebook/speed_grader?assignment_id=${window.CST.activity405iSupe.assignment_id}#%7B%22student_id%22%3A%22${studentId}%22%7D`;
+            // }
+
+            // 09.13.2019 tps For Fall 2019, drop special "Annotation" link for Activity 4.05 assignment.
 
             const anchor = document.createElement('A');
             anchor.href = link;

@@ -9,11 +9,16 @@ courses the teacher candidate is in.
 06.03.2019 tps In order to use same template for faculty & teacher candidate's, pass tcUser field to template.
 06.12.2019 tps Bug fix for failure to find iSupervision section's faculty member, when the faculty member had
                a role of "Test-Teacher".
+09.11.2019 tps Revamp for Fall 2019, which uses Canvas Studio instead of CritiqueIt. There are no assignment overrides,
+               & all students get the same assignments.
+10.16.2019 tps Don't display term courses that don't have a corresponding iSupervision course
 */
 
 // ******************** Module Imports ********************//
 const appConfig   = require('../../libs/appConfig');
 const canvasCache = require('../../libs/canvasCache');
+const dashUtils   = require('../../libs/dashUtils');
+
 
 // ******************** Constants ********************//
 const viewTemplate = 'dash/obs';
@@ -123,14 +128,18 @@ function get(req, res) {
     termCourse.students = [Object.assign( {}, user)];
 
     // For each course, include the faculty member for the student's section.
-    // 06.12.2019 tps Match "Test-Teacher" role as well as "TeacherEnrollment" role. I don't know why
-    // we use enrollment role instead of type. 
-    const courseEnrollments = canvasCache.getCourseEnrollments(termCourse.course_id);
-    termCourse.faculty = courseEnrollments.find(
-      e => (e.course_section_id === termCourse.course_section_id) && ["TeacherEnrollment", "Test-Teacher"].includes(e.role)
-      // e => (e.course_section_id === termCourse.course_section_id) && (e.role === "TeacherEnrollment")
-      //  e => (e.course_section_id === termCourse.course_section_id) && (e.type === "TeacherEnrollment")
-    );
+    termCourse.faculty = dashUtils.findSectionFaculty(termCourse.course_id, termCourse.course_section_id);
+
+    // // 06.12.2019 tps Match "Test-Teacher" role as well as "TeacherEnrollment" role. I don't know why
+    // // we use enrollment role instead of type. 
+    // // 09.16.2019 tps Match new "Demo-Teacher" role.
+    // const FACULTY_ROLES = ["TeacherEnrollment", "Test-Teacher", "Demo-Teacher"];
+    // const courseEnrollments = canvasCache.getCourseEnrollments(termCourse.course_id);
+    // termCourse.faculty = courseEnrollments.find(
+    //   e => (e.course_section_id === termCourse.course_section_id) && FACULTY_ROLES.includes(e.role)
+    //   // e => (e.course_section_id === termCourse.course_section_id) && (e.role === "TeacherEnrollment")
+    //   //  e => (e.course_section_id === termCourse.course_section_id) && (e.type === "TeacherEnrollment")
+    // );
  
     if (termCourse.faculty) {
       // Derive iSupervision course for term in fall 2018 style.
@@ -171,54 +180,63 @@ function get(req, res) {
         // const iSupeSectionId = studentEnrollments[0] ? studentEnrollments[0].course_section_id : null;
         const iSupeSectionId = studentEnrollment ? studentEnrollment.course_section_id : null;
         
-        // Collect any assignment overrides for this section
-        var assOverrides = [];
-        if (iSupeSectionId) {
-          // assOverrides = canvasCache.getUserAssignments(student.id, iSupeCourseId);
-          assOverrides = canvasCache.getCourseAssignments(iSupeCourseId);
+        // // Collect any assignment overrides for this section
+        // var assOverrides = [];
+        // if (iSupeSectionId) {
+        //   // assOverrides = canvasCache.getUserAssignments(student.id, iSupeCourseId);
+        //   assOverrides = canvasCache.getCourseAssignments(iSupeCourseId);
 
-          // We're only interested in overrides for the student's section
-          assOverrides = assOverrides.filter( e => e.overrides && e.overrides.find( f => f.course_section_id === iSupeSectionId) );
+        //   // We're only interested in overrides for the student's section
+        //   assOverrides = assOverrides.filter( e => e.overrides && e.overrides.find( f => f.course_section_id === iSupeSectionId) );
           
-          // This particular Canvas query includes more assignments than we really want,
-          // so try this to see only assignment overrides:
-          assOverrides = assOverrides.filter( e => e.only_visible_to_overrides);
+        //   // This particular Canvas query includes more assignments than we really want,
+        //   // so try this to see only assignment overrides:
+        //   assOverrides = assOverrides.filter( e => e.only_visible_to_overrides);
 
-          // We're only interested in the CritiqueAssignments
-          assOverrides = assOverrides.filter( e => e.submission_types.includes("external_tool"));
+        //   // We're only interested in the CritiqueAssignments
+        //   assOverrides = assOverrides.filter( e => e.submission_types.includes("external_tool"));
 
-          // assOverrides = iSupeAssignments.filter(
-          //   e => e.has_overrides && e.overrides.find( override => override.course_section_id === iSupeSectionId)
-          // );
-        }
+        //   // assOverrides = iSupeAssignments.filter(
+        //   //   e => e.has_overrides && e.overrides.find( override => override.course_section_id === iSupeSectionId)
+        //   // );
+        // }
 
         // Store the data we've collected
         student.iSupe_course_id = iSupeCourseId;
         student.iSupe_course_section_id = iSupeSectionId;
-        student.assignment_overrides = assOverrides;
+        // student.assignment_overrides = assOverrides;
 
       } // end loop through students
 
-      // Look for the iSupervision course's final status assignment
-      // and include it in template data, if found.
-      if (iSupeCourseId) {
-        const iSupeAssignments = canvasCache.getCourseAssignments(iSupeCourseId);
-        termCourse.assignment_final_status = iSupeAssignments.find( e => e.name === "Final iSupervision Status");
-      }
+      // // Look for the iSupervision course's final status assignment
+      // // and include it in template data, if found.
+      // if (iSupeCourseId) {
+      //   const iSupeAssignments = canvasCache.getCourseAssignments(iSupeCourseId);
+      //   termCourse.assignment_final_status = iSupeAssignments.find( e => e.name === "Final iSupervision Status");
+      // }
     } // end if faculty member found for teacher candidate's section
+
+    // 09.12.2019 tps Add iSupervision course's assignments
+    termCourse.assignments = [];
+    if (termCourse.iSupe_course_id) {
+      termCourse.assignments = canvasCache.getCourseAssignments(termCourse.iSupe_course_id);
+    }
 
   } // end loop through term courses
 
-  // Help the rendering template by including the maximum number of iSupervision
-  // assignments per students for each term.
-  for (let termCourse of userTerms) {
-    var maxAssCount = 0;
-    for (let student of termCourse.students) {
-      const assCount = student.assignment_overrides ? student.assignment_overrides.length : 0;
-      maxAssCount = (assCount > maxAssCount) ? assCount : maxAssCount;
-    } // end loop through term students
-    termCourse.maxAssignmentCount = maxAssCount;
-  } // end loop through terms
+    // 10.16.2019 tps Don't display term courses that don't have a corresponding iSupervision course
+    userTerms = userTerms.filter( e => e.iSupe_course_id );
+
+  // // Help the rendering template by including the maximum number of iSupervision
+  // // assignments per students for each term.
+  // for (let termCourse of userTerms) {
+  //   var maxAssCount = 0;
+  //   for (let student of termCourse.students) {
+  //     const assCount = student.assignment_overrides ? student.assignment_overrides.length : 0;
+  //     maxAssCount = (assCount > maxAssCount) ? assCount : maxAssCount;
+  //   } // end loop through term students
+  //   termCourse.maxAssignmentCount = maxAssCount;
+  // } // end loop through terms
 
   // /**
   //  * Populate a course modules collection containing module, assignment & quiz

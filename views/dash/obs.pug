@@ -5,6 +5,7 @@ html(lang='en')
     link(rel="stylesheet", href=APP_URL + "LatoLatin/latolatinfonts.css")
     link(rel="stylesheet", href=APP_URL + "style.css")
     link(rel="stylesheet", href=APP_URL + "style_dash_scroll.css")
+    link(rel="stylesheet", href=APP_URL + "style_module_submissions.css")
     link(rel="stylesheet", href=APP_URL + "obs.css")
     meta(name="viewport" content="width=device-width, initial-scale=1.0")
   body
@@ -61,160 +62,50 @@ html(lang='en')
                           A(HREF= CST_CANVAS_BASE_URL + 'courses/' + term.course_id + '/grades/' + student.id + '#tab-assignments' TARGET="_BLANK")= student.name
 
           //---------- Scrolling table columns
-          //- Client-side JS creates & fills in data columns
-          DIV(CLASS="scrolling_right")
-            TABLE(ClASS="obs_table"  ID="term_" + term.course_id)
-              THEAD
-                TR
-                  TH
-                    DIV Observation Assignments
-                    DIV(CLASS="show-all-control")
-                      -var chkId = 'chkShowAll_' + term.course_id
-                      INPUT(ID=chkId TYPE="checkbox" onclick=`toggleShowAll(${term.course_id}, this.checked)`)
-                      LABEL(FOR=chkId) Show all
-                  TH Final Status
-              TBODY
-                each student in term.students
+          //- Client-side JS creates & fills in data columns containing assignments
+          if term.assignments.length > 0
+            DIV(CLASS="scrolling_right")
+              TABLE(ClASS="obs_table"  ID="term_" + term.course_id)
+                THEAD
                   TR
-                    if tcUser
-                      TD ----
-                    else 
-                      TD
-                        BUTTON(onclick=`showAddForm(${term.course_id}, "CritiqueIt", ${student.id})` disabled=!student.iSupe_course_section_id) iSupervision
-                    TD(ID=`crs_${term.course_id}_sec_${student.iSupe_course_section_id}_stu_${student.id}_final`) ----
-      DIV
-        IMG(SRC=APP_URL + "obs-icons/key.png" CLASS="icons-key")
-      DIV(class="form-sms")
-        P You can receive a text notification when a hand is raised.
-        LABEL(for="phone") Phone: 
-        INPUT(type="tel" id="txtPhone" name="txtPhone" size="12" maxlength="12" placeholder="###-###-####" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}") 
-        BUTTON(type='submit' id='btnSubmitPhone' onclick="submitPhone()") Save number and receive test message
-        | 
-        BUTTON(type='submit' id='btnDeletePhone' onclick="deletePhone()" disabled) Stop notifications
-        DIV
-          DIV(id="phoneFeedback" class="form-sms-feedback") 
+                    each assignment in term.assignments
+                      TH
+                        DIV(CLASS="obs_table_header")
+                          if tcUser
+                            = assignment.name
+                          else
+                            A(HREF=assignment.html_url TARGET="_blank")= assignment.name
+                TBODY
+                  each student in term.students
+                    TR
+                      each assignment in term.assignments
+                        TD(ID= `crs_${term.course_id}_sec_${student.iSupe_course_section_id}_ass_${assignment.id}_stu_${student.id}`) ----
+          else
+            //- 09.17.2019 tps An iSupervision course or assignments might be missing
+            DIV(CLASS="scrolling_right")
+              TABLE(ClASS="obs_table"  ID="term_" + term.course_id)
+                THEAD
+                  TR
+                    TH
+                      DIV(CLASS="obs_table_header") ----
+                TBODY
+                  TR
+                    TD ----
+
+      //- DIV
+      //-   IMG(SRC=APP_URL + "obs-icons/key.png" CLASS="icons-key")
       
+      if !tcUser
+        P Use <span style="font-weight: bold">SpeedGrader</span> to review teacher candidate work.
+      P 
+        IMG(SRC=APP_URL + "mod-icons/box-asterisk.png" CLASS="recent_submission_img")
+        |  = Submission made within the last 48 hours
+      P
+        IMG(SRC=APP_URL + "obs-icons/comments-icon-24.png" CLASS="recent_submission_img")
+        |  = Faculty has made comments
+
       //- Place to log request errors
       DIV(ID="divStatus" STYLE="margin-top: 50px; color:red")
-      
-      //- Modal add assignment form
-      DIV(id="addAssDiv", class="modal")
-        FORM(class="modal-content animate" onSubmit="return false;" id="addAssForm")
-          //- SPAN(onclick="document.getElementById('addAssDiv').style.display='none'"
-          SPAN(onclick="cancelAdd()"
-            class="close"
-            title="Close Modal") &times;
-          DIV(class="container")
-            LABEL(ID='lblAdd') Add assignment with name:
-            INPUT(type='text'
-              name='assignmentName'
-              id='assignmentName'
-              required)
-            INPUT(type='hidden' id='studentId' name='studentId' value='')
-            INPUT(type='hidden' id='courseId' name='courseId' value='')
-            INPUT(type='hidden' id='sectionId' name='sectionId' value='')
-            INPUT(type='hidden' id='addType' name='addType' value='')
-            BUTTON(type='submit' id='btnSubmit' onclick="submitAdd()") Submit
-            | &nbsp; &nbsp;
-            //- BUTTON(type='button' onclick="document.getElementById('addAssDiv').style.display='none'" class="cancelBtn" id='btnCancel') Cancel
-            BUTTON(type='button' onclick="cancelAdd()" class="cancelBtn" id='btnCancel') Cancel
-            | &nbsp; &nbsp;
-            //- SPAN(id="waitMsg" class="errMsg" style="visibility:hidden") Adding new assignment... 
-            SPAN(id="waitMsg" class="errMsg" style="display:none") Adding new assignment... 
-              IMG(SRC=APP_URL + "spinner_small.gif")
-            SPAN(id="errMsg" class="errMsg" style="display:none")
-              
-      //- Modal Edit assignment form
-      DIV(id="editAssDiv", class="modal")
-        FORM(class="modal-content animate" onSubmit="return false;" id="addEditForm")
-          SPAN(onclick="cancelEdit()"
-            class="close"
-            title="Close Modal") &times;
-          DIV(class="container")
-            H3(id='editCurrentAssignmentName')
-            LABEL Rename assignment:
-            INPUT(type='text'
-              name='editNewAssignmentName'
-              id='editNewAssignmentName'
-              required)
-            INPUT(type='hidden' id='editCourseId' name='editCourseId' value='')
-            INPUT(type='hidden' id='editAssignmentId' name='editAssignmentId' value='')
-            BUTTON(type='submit' id='btnEditSubmit' onclick="submitEdit()") Submit
-            | &nbsp; &nbsp;
-            BUTTON(type='button' onclick="cancelEdit()" class="cancelBtn" id='btnEditCancel') Cancel
-            | &nbsp; &nbsp;
-            SPAN(id="editWaitMsg" class="errMsg" style="display:none") Updating assignment... 
-              IMG(SRC=APP_URL + "spinner_small.gif")
-            SPAN(id="editErrMsg" class="errMsg" style="display:none")
-            
-      //- Modal Google Doc form 
-      DIV(id="createGDocDiv", class="modal")
-        FORM(class="modal-content animate" onSubmit="return false;" id="createGDocForm")
-          SPAN(onclick="cancelCreateGDoc()"
-            class="close"
-            title="Close Modal") &times;
-          DIV(class="container")
-            H3 Create Google Doc
-            LABEL Google Doc name:
-            INPUT(type='text'
-              name='createGDocName'
-              id='createGDocName'
-              required)
-            INPUT(type='hidden' id='createGDocCourseId' name='createGDocCourseId' value='')
-            INPUT(type='hidden' id='createGDocAssignmentId' name='createGDocAssignmentId' value='')
-            INPUT(type='hidden' id='createGDocAssJson' name='createGDocAssJson' value='')
-            INPUT(type='hidden' id='createGDocCandidateName' name='createGDocCandidateName' value='')
-            BUTTON(type='submit' id='btnCreateGDocSubmit' onclick="submitCreateGDoc()") Submit
-            | &nbsp; &nbsp;
-            BUTTON(type='button' id='btnCreateGDocCancel' onclick="cancelCreateGDoc()" class="cancelBtn") Cancel
-            | &nbsp; &nbsp;
-            SPAN(id="createGDocWaitMsg" class="errMsg" style="display:none") Creating Google Doc... 
-              IMG(SRC=APP_URL + "spinner_small.gif")
-            SPAN(id="createGDocErrMsg" class="errMsg" style="display:none")
-
-      //- Modal Google Doc merge result form 
-      DIV(id="createGDocResultDiv", class="modal")
-        FORM(class="modal-content animate" onSubmit="return false;" id="createGDocResultForm")
-          SPAN(onclick="cancelCreateGDocResult()"
-            class="close"
-            title="Close Modal") &times;
-          DIV(class="container")
-            H3(ID='createGDocResultText')            
-            DIV
-              LABEL Document link:
-            DIV
-              A(ID='createGDocResultLink' TARGET="_blank" onclick="cancelCreateGDocResult();" STYLE="overflow-wrap: break-word;") Web link goes here
-            DIV(STYLE='text-align:center; margin-top:12px;')
-              BUTTON(type='button' id='btnCreateGDocResultCancel' onclick="cancelCreateGDocResult()" class="cancelBtn") OK
-
-      //- Modal Google Doc Duplicate Name Form 
-      DIV(id="dupeGDocDiv", class="modal")
-        FORM(class="modal-content animate" onSubmit="return false;" id="dupeGDocForm")
-          SPAN(ID="dupeGDocCross"
-            class="close"
-            title="Close Modal") &times;
-          DIV(class="container")
-            H3 Duplicate Google Doc Name
-            P There is already a Google Doc with the name:
-            P(ID='dupeGDocNameExists' STYLE="font-style: italic;") duplicate document name
-            P Try creating the Google Doc with this name instead?
-            P(ID='dupeGDocNameSuggested' STYLE="font-style: italic;") suggested name
-            BUTTON(type='submit' id='btnDupeGDocSubmit' onclick="submitDupeGDoc()") Yes
-            | &nbsp; &nbsp;
-            BUTTON(type='button' id='btnDupeGDocCancel' onclick="cancelDupeGDoc()" class="cancelBtn") No, let me edit the doc name
-            | &nbsp; &nbsp;
-
-      //- Modal form for unexpected error. There's nothing the user can do for these errors. 
-      DIV(id="errDialogDiv", class="modal")
-        FORM(class="modal-content animate" onSubmit="return false;" id="errDialogForm")
-          SPAN(ID="errDialogCross"
-            class="close"
-            title="Close Modal") &times;
-          DIV(class="container")
-            H3 Error
-            LABEL(FOR="errDialogTextContent") Unable to complete your request due to an unexpected error:
-            TEXTAREA(STYLE="width:95%;" rows='8' name='errDialogTextContent' id='errDialogTextContent' readonly) error message
-            BUTTON(type='submit' id='btnErrDialogSubmit') OK
 
       //- Debug stuff
       if isDevModeOn
@@ -234,10 +125,6 @@ html(lang='en')
               TD user
               TD
                 PRE= JSON.stringify(user, null, 2)
-            //- TR
-            //-   TD courseModules
-            //-   TD
-            //-     PRE= JSON.stringify(courseModules, null, 2)
           
           //- Display session data for developers
           H2 Sever Session

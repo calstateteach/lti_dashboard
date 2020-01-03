@@ -124,9 +124,10 @@ html(lang='en')
                       TH
                         DIV= module.name
 
-                        //- Display module's submission count
+                        //- Display module's submission count.
+                        //- 09.10.2019 tps Pluralize correctly.
                         - var submissionCount = module.items_count
-                        DIV(STYLE="font-weight:normal")= submissionCount + " submissions"
+                        DIV(STYLE="font-weight:normal")= submissionCount + " " + ((submissionCount > 1) ? "submissions" : "submission")
                     TH
                       //- 01.25.2019 tps Label the last column "Term Grade", 
                       //- except when the module is used for assessment.

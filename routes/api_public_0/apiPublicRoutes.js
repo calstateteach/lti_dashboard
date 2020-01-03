@@ -6,11 +6,12 @@ This API provides unsecured access to Canvas assignment data for cross-domain AJ
                to include quizzes that are assignments in the navigation.
 08.22.2018 tps Use dashboard module for fall 2018.
 08.24.2018 tps Fix next/prev assignment lookup for fall 2018.
+09.12.2019 tps Handle assignment navigation for observations dashboard courses.
 */
 
 const express     = require('express');
 const router      = express.Router();
-const appConfig   = require('../../libs/appConfig');
+// const appConfig   = require('../../libs/appConfig');
 const canvasCache = require('../../libs/canvasCache');
 
 
@@ -47,17 +48,32 @@ function assignmentNavigationHandler(req, res) {
 
   // const modules = canvasCache.getCourseModules(courseId);
   // const modules = canvasCache.getAdaptedCourseModules(courseId)
+  
+  var assignmentIds = [];   // Accumulate ordered list of course's assignments
   const modules = canvasCache.getDashboardModules(courseId); 
-  if (!modules) return noDataErr();
+  // if (!modules) return noDataErr();
 
-  var assignmentIds = [];   // Accumulate ordered list of assignments as used by the dashboard
-  for (let module of modules) {
-  // for (let moduleIndex of courseConfig.module_indices) {
-    // const assignments = modules[moduleIndex].items.filter( e => e.type === 'Assignment');
-    // assignmentIds = assignmentIds.concat(assignments.map( e => e.content_id));
-    const assignments = module.items.filter( e => e.type === 'Gradeable');
-    assignmentIds = assignmentIds.concat(assignments.map( e => e.assignment_id));
+  if (modules.length > 0) {  // Accumulate ordered list of assignments as used by the modules dashboard
+    for (let module of modules) {
+        const assignments = module.items.filter( e => e.type === 'Gradeable');
+        assignmentIds = assignmentIds.concat(assignments.map( e => e.assignment_id));
+      }    
+  } else {
+    // Maybe request is for observations dashboard instead.
+    const assignments = canvasCache.getCourseAssignments(courseId);
+    if (assignments.length > 0) {
+      assignmentIds = assignments.map( e => e.id);
+    }
   }
+
+  // var assignmentIds = [];   // Accumulate ordered list of assignments as used by the dashboard
+  // for (let module of modules) {
+  // // for (let moduleIndex of courseConfig.module_indices) {
+  //   // const assignments = modules[moduleIndex].items.filter( e => e.type === 'Assignment');
+  //   // assignmentIds = assignmentIds.concat(assignments.map( e => e.content_id));
+  //   const assignments = module.items.filter( e => e.type === 'Gradeable');
+  //   assignmentIds = assignmentIds.concat(assignments.map( e => e.assignment_id));
+  // }
 
   const assignmentIndex = assignmentIds.findIndex( e => e === assignmentId);
   if (assignmentIndex < 0) {

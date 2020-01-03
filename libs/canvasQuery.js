@@ -8,6 +8,9 @@
 05.28.2018 tps Add query for user assignmnts by course.
 06.19.2018 tps Add query for course quizzes.
 08.20.2018 tps Include rubrics in getStudentSubmissions query.
+09.25.2019 tps Add query for submissions with comments.
+12.18.2019 tps Add query for user enrollments.
+12.18.2019 tps Add query for user search.
 */
 
 const canvasApi = require('./canvasApiTiny');
@@ -102,6 +105,15 @@ exports.getCourseSubmissions = (courseId, callback) => {
   return canvasApi.get(endpoint, params, callback);
 };
 
+exports.getStudentSubmissionsWithComments = (sectionId, studentId, callback) => {
+  let endpoint = `sections/${sectionId}/students/submissions`;
+  let params = {
+    'student_ids[]': studentId,
+    'include[]': ['rubric_assessment', 'submission_comments']
+  };
+  return canvasApi.get(endpoint, params, callback);  
+};
+
 exports.getStudentSubmissions = (sectionId, studentId, callback) => {
   let endpoint = `sections/${sectionId}/students/submissions`;
   let params = {
@@ -147,6 +159,17 @@ exports.getCourseQuizzes = (courseId, callback) => {
   const endpoint = `courses/${courseId}/quizzes`;
   return canvasApi.get(endpoint, {}, callback);
 };
+
+exports.getUserEnrollments = (userId, callback) => {
+  const endpoint = `users/${userId}/enrollments`;
+  return canvasApi.get(endpoint, {}, callback);
+};
+
+exports.listAccountUsers = (searchTerm, callback) => {
+  const endpoint = `accounts/1/users`;
+  return canvasApi.get(endpoint, { 'search_term': searchTerm }, callback);
+};
+
 
 //******************** Canvas POST APIs  ********************//
 

@@ -19,6 +19,9 @@
 07.27.2018 tps Add route for scan for hands test.
 12.19.2018 tps Add route for teacher candidate lists.
 04.06.2019 tps Add route for CST-Admin list.
+09.27.2019 tps Add route for authorization token test page.
+10.11.2019 tps Add route for page to view restored access students in CAM.
+12.20.2019 tps Pass CE Hours entry URL to test page.
 */
 
 const express = require('express');
@@ -79,6 +82,9 @@ router.get ('/cstAdminsConfig', cstAdminsHandler.get);
 router.post('/cstAdminsConfig', cstAdminsHandler.post);
 
 router.get('/camUserSearch', require('./camUserSearchHandler'));
+router.get('/testAuth', (req, res) => {
+   return res.render('dev/testAuth', { url: process.env.CAM_CE_HOURS_ENTRY_URL} ); 
+  });
 
 const assUrlHandler = require('./assignmentRedirectUrlsHandler');
 router.get('/assignmentUrls', assUrlHandler.get);
@@ -112,5 +118,7 @@ router.get('/tcObservationsLinks', tcDevPagesHandler.getObservationsLinks);
 
 router.get('/cstAdminList', require('./cstAdminListHandler'));
 router.get('/cstAdminLaunch/:canvasUserId', require('./cstAdminLaunchHandler'));
+
+router.get('/restoredAccessData', require('./restoredAccessHandler'));
 
 exports.router = router;

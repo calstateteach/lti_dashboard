@@ -1,6 +1,7 @@
 /* Module for parsing multiple CAM API requests into one array of data results.
 02.19.2018 tps Created.
 04.06.2018 tps Add handling for case of being passed an empty list of API requests.
+10.11.2019 tps Make sure results are stored to corresponding indexes in query list.
 */
 
 const https = require('https');
@@ -18,7 +19,7 @@ function collectApiResults(list, callback) {
   var dataAccumulator = [];   // Populate with CE hours records from CAM
 
   // Called when each iteration is done
-  function report(err, data) {
+  function report(err, data, resultIndex) {
 
       // If an error was reported, we're done
       if (err) return callback(err);
@@ -26,7 +27,8 @@ function collectApiResults(list, callback) {
       // Gather data from each iteration. 
       // We expect an array. Don't bother collecting empty arrays.
       if (data.length > 0) {
-        dataAccumulator.push(data);
+        // dataAccumulator.push(data);
+        dataAccumulator[resultIndex] = data;  // Store to index corresponding to query string
       }
 
       // See if all the iterations are done yet.
@@ -41,7 +43,7 @@ function collectApiResults(list, callback) {
   if (list.length > 0) {
     // Give each iteration its job
     for(var i = 0; i < list.length; i++) {
-        getParsedData(list[i], report)
+        getParsedData(list[i], i, report)
     }
   } else {
     return callback(null, []);
@@ -49,7 +51,7 @@ function collectApiResults(list, callback) {
 }
 
 
-function getParsedData(url, callback) {
+function getParsedData(url, resultIndex, callback) {
   // Callback signature: (err, <array of CAM data object>)
   // If no data found, return a null err and empty array
    
@@ -67,7 +69,7 @@ function getParsedData(url, callback) {
 
     parse(data, { columns: true }, function(err, parsedRows) {
       if (err) return callback(err);
-      return callback(null, parsedRows);
+      return callback(null, parsedRows, resultIndex);
     });
   });  
 }

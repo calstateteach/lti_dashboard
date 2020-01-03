@@ -12,14 +12,17 @@ const router = express.Router();
 // ******************** Routing Functions ********************//
 
 router.use(require('./secureDashMiddleware'));
-router.get('/faculty/:userId', require('./dashHandler'));
+// router.get('/faculty/:userId', require('./dashHandler'));
+router.get('/faculty/:userId', require('./facultyModulesRestoredHandler'));
 router.get('/faculty/:userId/course/:courseId/section/:sectionId/dashmodule/:moduleId/student/:studentId', require('./moduleSubmissionsHandler'));
-router.get('/faculty/:userId/obs', require('./obsHandler'));
+// router.get('/faculty/:userId/obs', require('./obsHandler'));
+router.get('/faculty/:userId/obs', require('./facultyObsRestoredHandler')); // 10.06.2019 tps 
 
 // Routes for teacher candidate pages
 router.get('/tc/:userId/mod', require('./tcModulesHandler'));
 router.get('/tc/:userId/mod/course/:courseId/section/:sectionId/dashmodule/:moduleId', require('./tcModuleSubmissionsHandler'));
-router.get('/tc/:userId/obs', require('./tcObsHandler'));
+// router.get('/tc/:userId/obs', require('./tcObsHandler'));
+router.get('/tc/:userId/obs', require('./tcObsRestoredHandler'));
 
 // Route for CST-Admin page
 router.get('/cstAdmin', require('./cstAdminDashHandler'));

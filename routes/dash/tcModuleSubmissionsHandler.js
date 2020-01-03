@@ -2,11 +2,14 @@
 12.19.2018 tps Created from moduleSubmissionsHandler.js
 02.08.2019 tps Bug fix. Use enrollment role, not type, to identify teacher candidate's faculty member.
 06.13.2019 tps In order to use same template for faculty & teacher candidate's, pass tcUser field to template.
+10.16.2019 tps Fix identification of faculty member for candidate's section.
+10.02.2019 tps Bug fix. Use enrollment role to select appropriate faculty member for student's section.
+10.02.2019 tps Display semester data for courses with restored access.
 */
-
 const canvasCache = require('../../libs/canvasCache');
-const appConfig   = require('../../libs/appConfig');
-
+const dashUtils   = require('../../libs/dashUtils');
+// const appConfig   = require('../../libs/appConfig');
+const dashSemesters = require('../../libs/dashSemesters');
 
 function get(req, res) {
 
@@ -40,9 +43,23 @@ function get(req, res) {
   };
 
   // Find data for term containing the student of interest.
-  const terms = appConfig.getTerms();
-  var term = terms.find( e => e.course_id === courseId);
+  // 10.02.2019 tps We need to search all the semesters
+  let term = null;
+  const semesters = dashSemesters.getAll();
+  for (let semester of semesters) {
+    term = semester.terms_config.find( e => e.course_id === courseId);
+    if (term) {
+      // For display purposes, include semester info
+      term.year = semester.year;
+      term.season = semester.season;
+      break;
+    }
+  }
 
+  // // Find data for term containing the student of interest.
+  // const terms = appConfig.getTerms();
+  // var term = terms.find( e => e.course_id === courseId);
+  
   // Throw in configuration data for the term
   Object.assign(termObject, term);
 
@@ -55,9 +72,12 @@ function get(req, res) {
 
   // Find faculty member for teacher candidate's section,
   // so we can derive the corresponding iSupervision course.  
-  let facultyUser = courseEnrollments.find(
-      e => (e.course_section_id === sectionId) && (e.role === "TeacherEnrollment")
-  );
+  let facultyUser = dashUtils.findSectionFaculty(courseId, sectionId);
+  // let facultyUser = courseEnrollments.find(
+  //   // 09.16.2019 tps Use type test so we can locate teachers in Demo-Teacher role.
+  //   // e => (e.course_section_id === sectionId) && (e.role === "TeacherEnrollment")
+  //   e => (e.course_section_id === sectionId) && (e.type === "TeacherEnrollment")
+  // );
   facultyUser = facultyUser ? facultyUser.user : null;
   // const facultyUser = courseEnrollments.find(
   //   e => (e.course_section_id === sectionId) && (e.type === "TeacherEnrollment")

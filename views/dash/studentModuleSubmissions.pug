@@ -39,7 +39,7 @@ html(lang='en')
       else
         A(HREF= APP_URL + "dash/faculty/" + user.id)= 'Modules Dashboard for ' + user.name
     each term in userTerms
-      H2= term.name
+      H2= term.year + ' ' + term.season + ', ' + term.name
       DIV
         //---------- Fixed table columns
         DIV(CLASS="fixed_left")

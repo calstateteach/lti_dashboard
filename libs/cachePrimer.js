@@ -9,6 +9,7 @@
 08.27.2018 tps Don't prefetch assignments by user. Takes too long.
 12.19.2018 tps For student dashboard, pre-load student list.
 04.05.2019 tps For CST-Admin role, pre-load faculty CAM data.
+10.21.2019 tps Made obsolete by cacheSemestersPrimer.js.
 */
 
 // const fs          = require('fs');

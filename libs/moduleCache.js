@@ -3,9 +3,11 @@
 06.06.2018 tps Even if there's no cached data, return a storage object
   to the client so that client doesn't have to test for null values.
   Would clients want to be able to tell that no data was cached, though?
-*/
+10.08.2019 tps Fix callback sequencing errors.
+  */
 
 const fs          = require('fs');
+const async       = require('async');
 
 const CACHE_DIR = 'canvas_cache/';
 
@@ -39,6 +41,7 @@ function loadQuery(queryKey, queryFunction, callback) {
 function loadCacheFile(queryKey, callback) {
 
   // callback signature: (err, json)
+  // 10.08.2019 tps Fix nesting of async calls.
 
   // // Try module storage first
   // if (storage[queryKey]) return process.nextTick(callback, null, storage[queryKey].json);
@@ -52,21 +55,35 @@ function loadCacheFile(queryKey, callback) {
     let json = {}; 
     try {
       json = JSON.parse(data);
+   
+      // Retrieve a timestamp for the file data
+      fs.stat(filePath, (fileStatErr, stat) => {
+        if (err) return callback(fileStatErr);
+
+        // Save file json to local storage
+        storage[queryKey] = { 
+          timestamp: stat.mtime,
+          json: json
+        };
+        return callback(null, json);
+      }); // end reading file info
+
     } catch(parseErr) {
+      console.log('Error parsing cache entry for', queryKey);
       return callback(parseErr);
     }
 
-    // Retrieve a timestamp for the file data
-    fs.stat(filePath, (fileStatErr, stat) => {
-      if (err) return callback(fileStatErr);
+    // // Retrieve a timestamp for the file data
+    // fs.stat(filePath, (fileStatErr, stat) => {
+    //   if (err) return callback(fileStatErr);
 
-      // Save file json to local storage
-      storage[queryKey] = { 
-        timestamp: stat.mtime,
-        json: json
-      };
-      return callback(null, json);
-    });
+    //   // Save file json to local storage
+    //   storage[queryKey] = { 
+    //     timestamp: stat.mtime,
+    //     json: json
+    //   };
+    //   return callback(null, json);
+    // });
   }); // end readFile callback
 }
 
@@ -130,24 +147,31 @@ function loadDiskCache(callback) {
       return callback();
     }
 
-    var iterationCount = 0; // Tells us when to stop iterations
-    for (var filename of files) {
+    // 10.08.2019 tps Fix async iteration
+    // Convert file names to query keys used by the cache.
+    // Use file's base name without extension as the file data's cache key.
+    files = files.map( e => e.split('.')[0] );
+    async.each(files, loadCacheFile, callback);
 
-      // Use file's base name without extension as the file data's cache key
-      const queryKey = filename.split('.')[0];
+    //   var iterationCount = 0; // Tells us when to stop iterations
+  //   for (var filename of files) {
 
-      // Since we've just seen that the file exists, we should
-      // be able to load its data without a query.
-      loadCacheFile(queryKey, (err, json) => {
+  //     // Use file's base name without extension as the file data's cache key
+  //     const queryKey = filename.split('.')[0];
 
-        if (err) return callback(err);
+  //     // Since we've just seen that the file exists, we should
+  //     // be able to load its data without a query.
+  //     loadCacheFile(queryKey, (err, json) => {
 
-        // See if we're done with all the files yet.
-        if (++iterationCount >= files.length) {
-          return callback();
-        }      
-      });
-    }
+  //       if (err) return callback(err);
+
+  //       // See if we're done with all the files yet.
+  //       if (++iterationCount >= files.length) {
+  //         return callback();
+  //       }      
+  //     });
+  //   }
+
   });
 }
 

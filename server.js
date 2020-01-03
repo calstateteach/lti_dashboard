@@ -18,7 +18,8 @@
 05.26.2018 tps Load configuration item for DEV_MODE.
 07.26.2018 tps Start timer to scan for hands raised.
 08.13.2018 tps Load a globally available term name.
-06.03.2019 tps Remove scan for hands raised in CritiqueIt. This feature no longer needed. 
+06.03.2019 tps Remove scan for hands raised in CritiqueIt. This feature no longer needed.
+09.25.2019 tps In preparation for creating CAM auth tokens, pre-load a private key.
 */
 require('dotenv').config();
 const async = require('async');
@@ -97,13 +98,16 @@ app.use('/api_public/v0', require('./routes/api_public_0/apiPublicRoutes').route
 //******************** Pre-flight Activities ********************//
 
 async.series([
+  require('./libs/dashSemesters').load,  // 09.30.2019 tps Read multiple term configuration files
   require('./libs/appConfig').loadAll,
-  require('./libs/moduleCache').loadDiskCache
+  require('./libs/moduleCache').loadDiskCache,
+  require('./libs/authUtils').loadKey
 ], preflightDone);
 
 //******************** Define App Startup ********************//
 function preflightDone(err) {
-  if (err) return console.log("Unable to start dashboard:", err);
+  // if (err) return console.log("Unable to start dashboard:", err);
+  if (err) console.log("preflight async error:", err);
 
   // Start timer to keep cache refreshed
   const timer = require('./libs/canvasCacheTimer').start();

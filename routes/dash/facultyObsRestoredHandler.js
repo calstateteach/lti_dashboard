@@ -14,63 +14,97 @@ courses the faculty user teaches.
 06.03.2019 tps In order to use same template for faculty & teacher candidate's, pass tcUser field to template.
 09.11.2019 tps Revamp for Fall 2019, which uses Canvas Studio instead of CritiqueIt. There are no assignment overrides,
                & all students get the same assignments.
-10.16.2019 tps Don't display term courses that don't have a corresponding iSupervision course
+10.06.2019 tps Include iSupervision courses containing restored access students.
+10.06.2019 tps Handle terms with different styles of assignments.
+12.17.2019 tps Don't include students who do not have an iSupervision course enrollment
 */
 
 // ******************** Module Imports ********************//
-const appConfig   = require('../../libs/appConfig');
+// const appConfig   = require('../../libs/appConfig');
 const canvasCache = require('../../libs/canvasCache');
 const checkDashboardRequest = require('./secureDashboardPage');
-
+const dashSemesters = require('../../libs/dashSemesters');
+const assignmentOverridesStyle = require('./facultyObsAssignmentOverrides');
 
 // ******************** Constants ********************//
-const viewTemplate = 'dash/obs';
+// const viewTemplate = 'dash/obs';
+const viewTemplate = 'dash/obsRestored';
 
 function get(req, res) {
 
   // Gather request parameters
   const userId = parseInt(req.params['userId'], 10);
-  // const isDevMode = req.session.userAuthMethod === 'dev';    // Indicate whether user is logged in as developer.
   const userRoles = req.session.fdb_roles;                    // Page needs to know the user's role
-  // const userIdSession = parseInt(req.session.custom_canvas_user_id, 10);
-  // const isCstAdmin = userRoles.includes('CST-Admin'); 
-
-  // // Don't let faculty user tamper with URL
-  // if ((req.session.userAuthMethod === 'lti') 
-  //   && (userIdSession != userId) 
-  //   && (!isCstAdmin)) {
-  //   return res.redirect(req.app.locals.APP_URL + 'badRequest');
-  // }
-
-  // // Don't let CST-Admin look at faculty that is not in their assigned campus.
-  // if (isCstAdmin) {
-    
-  //   // Find out which campus the user administers
-  //   const cstAdmin = appConfig.getCstAdmins().find( e => e.email === req.session.custom_canvas_user_login_id);
-  //   if (!cstAdmin) return res.redirect(req.app.locals.APP_URL + 'badRequest');
-  //   const cstAdminCampus = cstAdmin.campus_code;
-
-  //   if (cstAdminCampus != '*') {  // This code matches all campi.
-  //     // Verify that faculty is in this campus.
-  //     const facultyUser = canvasCache.getFacultyCam().find( e => e.id === userId);
-  //     if (!facultyUser) return res.redirect(req.app.locals.APP_URL + 'badRequest');
-  //     if (facultyUser.cam.campus_code != cstAdminCampus) return res.redirect(req.app.locals.APP_URL + 'badRequest');
-  //   }
-  // }
 
   // Don't let user tamper with URL.
   if (!checkDashboardRequest(req)) {
     return res.redirect(req.app.locals.APP_URL + 'badRequest');
   }
 
-  /**
-   * Initialize array containing faculty user's term courses.
-   * We should end up with one array item for each
-   * term course the faculty user is enrolled in.
-   */
-  const terms = appConfig.getTerms();
+  // Lookup user object from faculty list cache.
+  // If the user ID is invalid, something is really wrong.
+  const userEnrollment = canvasCache.getFaculty().find( e => e.user.id === userId);
+  if (!userEnrollment) {
+    return res.redirect(req.app.locals.APP_URL + 'badRequest');
+  }
+  const user = userEnrollment.user;
+
   const facultyEnrollments = canvasCache.getFaculty();
-  var userTerms = [];
+
+  // Loop through all semesters
+  const allUserTerms = []; // Initialize array containing one element for each semester
+  for (let semester of dashSemesters.getAll()) {
+
+    // How to build terms for user depends on style of iSupervision course organization
+    // in that semester.
+    // const userTerms = buildTermsForUser(user, facultyEnrollments, semester.terms_config);
+    let userTerms = [];
+    if (semester.isupe_assignment_style === 'overrides') {
+      // Assignment overrides (CritiqueIt)
+      userTerms = assignmentOverridesStyle.build(user, facultyEnrollments, semester.terms_config);
+    }  else {
+      // Standard style
+      userTerms = buildTermsForUser(user, facultyEnrollments, semester.terms_config);
+    }
+    if (userTerms.length > 0) {
+     
+      // 12.17.2019 tps Don't include students who do not have an iSupervision course enrollment
+      for (let userTerm of userTerms) {
+        userTerm.students = userTerm.students.filter( e => e.iSupe_course_section_id );
+      }
+
+      // 12.17.2019 tps Don't include terms that have no student enrollments
+      userTerms = userTerms.filter( e => e.students.length > 0);
+
+      allUserTerms.push( {...semester, ...{"term_courses": userTerms} });
+      // {
+      //   "year": semester.year,
+      //   "season": semester.season,
+      //   "use_for": semester.use_for,
+      //   "isupe_assignment_style": semester.isupe_assignment_style,
+      //   "term_courses": userTerms,
+      // });
+    }
+  } // end loop through semesters.
+  
+  // Prepare to deliver data to the page template.
+  const params = {
+    // isDevMode: isDevMode,
+    userRoles: userRoles,
+    user: user,
+    // userTerms: userTerms.filter( e => e.students.length > 0), // We only care about terms with students.
+    semesters: allUserTerms,
+    sessionData: req.session,
+    tcUser: false  // 06.03.2019 tps Tell template to display faculty version.
+  }
+  return res.render(viewTemplate, params);
+}
+
+
+// Return array containing all faculty member's module courses in one semester
+function buildTermsForUser(user, facultyEnrollments, terms) {
+  var userTerms = []; // Populate this return value
+  const userId = user.id;
 
   for (let term of terms) {
 
@@ -90,18 +124,34 @@ function get(req, res) {
 
       userTerms.push( termObject );
     }
+
+    // // Could be that faculty has a restored access student enrolled in the
+    // // the corresponding iSupervision course anyway, even if the user is
+    // // not in a modules course.
+    // // Build sis course id for faculty user's corresponding isupervision course
+    // // See if such a sis course id exists in the isupervision course list
+    // // If it does, add it to the userTerms collection.
+    // const sisCourseId = term.isupe_prefix + user.login_id.split('@')[0];
+    // const iSupeCourse = canvasCache.getISupeCourses().find( e => e.sis_course_id === sisCourseId);
+    // if (iSupeCourse) {
+    //   console.log('found isupervision course for', term.name, sisCourseId)
+    // }
   }
 
-  // If the enrollmentList is empty, we probably got an invalid
-  // userId, so we can stop the proceedings right now.
-  if (userTerms.length <= 0) {
-    const s = `No enrollment data found for user ID ${userId}. User might not be in any of the courses configured for the dashboard.`;
-    return res.render('dash/facultyDashErr', { 'err': s } );
-  }
+  // If the enrollmentList is empty, the user isn't enrolled in any terms this semester,
+  // so we we stop the proceedings right now.
+  if (userTerms.length <= 0) return [];
+
+  // // If the enrollmentList is empty, we probably got an invalid
+  // // userId, so we can stop the proceedings right now.
+  // if (userTerms.length <= 0) {
+  //   const s = `No enrollment data found for user ID ${userId}. User might not be in any of the courses configured for the dashboard.`;
+  //   return res.render('dash/facultyDashErr', { 'err': s } );
+  // }
    
-  // We'll need the user's user object to display user info.
-  const enrollments = facultyEnrollments.filter( e => e.user_id === userId);
-  const user = enrollments[0].user;
+  // // We'll need the user's user object to display user info.
+  // const enrollments = facultyEnrollments.filter( e => e.user_id === userId);
+  // const user = enrollments[0].user;
 
   /**
    * Gather the students in each of the user's sections.
@@ -177,9 +227,6 @@ function get(req, res) {
           e => (e.user_id === student.id) && (e.course_id === iSupeCourseId)
         );
       }
-      // const studentEnrollments = iSupeEnrollments.filter(
-      //   e => (e.user_id === student.id) && (e.course_id === iSupeCourseId)
-      // );
 
       // We're interested in the section ID.
       // The student may not be enrolled in an iSupervision course
@@ -225,54 +272,9 @@ function get(req, res) {
     termCourse.assignments = canvasCache.getCourseAssignments(iSupeCourseId);
 
   } // end loop through term courses
-
-  // 10.16.2019 tps Don't display term courses that don't have a corresponding iSupervision course
-  userTerms = userTerms.filter( e => e.iSupe_course_id );
-
-  // // Help the rendering template by including the maximum number of iSupervision
-  // // assignments per students for each term.
-  // for (let termCourse of userTerms) {
-  //   var maxAssCount = 0;
-  //   for (let student of termCourse.students) {
-  //     const assCount = student.assignment_overrides.length;
-  //     maxAssCount = (assCount > maxAssCount) ? assCount : maxAssCount;
-  //   } // end loop through term students
-  //   termCourse.maxAssignmentCount = maxAssCount;
-  // } // end loop through terms
-
-  // /**
-  //  * Populate a course modules collection containing module, assignment & quiz
-  //  * data for each course the faculty teaches.
-  //  * The collection is indexed by the canvas course ID.
-  //  * 06.20.2018 tps Use adapted version of module collection so we can properly
-  //  *                handle quizzes that are assignments.
-  //  */
-  // var courseModules = { }; // Initialize collection to hold modules, indexed by course ID.
-  // for (let courseId of userTerms.map(e => e.course_id)) {
-  //   // We're going to manipulate the modules collection, so use a copy   
-  //   // const modules = JSON.parse(JSON.stringify(canvasCache.getCourseModules(courseId)));
-  //   const modules = JSON.parse(JSON.stringify(canvasCache.getAdaptedCourseModules(courseId)));
-
-  //   // // Include only "Assignment" & "Quiz" items.
-  //   // for (module of modules) {
-  //   //   module.items = module.items.filter( e => ['Assignment', 'Quiz'].includes(e.type));
-  //   // }
-  //   courseModules[courseId] = modules;
-  // }
-  
-  // Prepare to deliver data to the page template.
-  const params = {
-    // isDevMode: isDevMode,
-    userRoles: userRoles,
-    user: user,
-    userTerms: userTerms.filter( e => e.students.length > 0), // We only care about terms with students.
-    // courseModules: courseModules,
-    // addConfig: appConfig.getAdds(),
-    sessionData: req.session,
-    tcUser: false  // 06.03.2019 tps Tell template to display faculty version.
-  }
-  return res.render(viewTemplate, params);
+  return userTerms;
 }
+
 
 // ******************** Exports ********************//
 module.exports = get;

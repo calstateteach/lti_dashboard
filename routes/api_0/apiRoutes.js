@@ -9,6 +9,13 @@
 09.21.2018 tps Add endpoint to update Canvas assignment.
 11.05.2018 tps Add endpoint for CritiqueIt assignment retrieval by course.
 05.16.2019 tps Add endpoint for Google Doc creation.
+09.25.2019 tps Add endpoint for retrieving submissions with comments.
+09.27.2019 tps Add endpoint for creating authorization token.
+12.06.2019 tps Add endpoint for retrieving list of user's Google Drive folders.
+12.12.2019 tps Add endpoints for copying Google Drive docs.
+10.04.2019 tps Add endpoint for CE hours by year & term
+12.20.2019 tps Add endpoint for creating authorization token for CE Hours entry Web app.
+12.26.2019 tps Add extra security when creating CE Hours authorization token.
 */
 
 const express         = require('express');
@@ -20,6 +27,7 @@ const camApi          = require('../../libs/camApi');
 const appConfig       = require('../../libs/appConfig');
 const critiqueItApi   = require('../../libs/critiqueItApi');
 const dashUserHandler = require('./dashUserHandler');
+const authUtils       = require('../../libs/authUtils');
 
 // JSON will be sent to endpoint for observations page.
 const bodyParser = require('body-parser');
@@ -33,7 +41,20 @@ Returns JSON from live Canvas API call.
 function studentSubmissionsHandler(req, res) {
   let sectionId = parseInt(req.params['sectionId'], 10);
   let studentId = parseInt(req.params['studentId'], 10);
-  canvasQuery.getStudentSubmissions(sectionId, studentId, (err, json) => {
+  canvasQuery.getStudentSubmissionsWithComments(sectionId, studentId, (err, json) => {
+    if (err) return res.send(err);   // TODO: Better error feedback
+    return res.json(json);
+  });
+}
+
+/* 09.25.2019 tps  Handle restful query for submissions for single student,
+including submission comments.
+Returns JSON from live Canvas API call.
+*/
+function studentSubmissionsWithCommentsHandler(req, res) {
+  let sectionId = parseInt(req.params['sectionId'], 10);
+  let studentId = parseInt(req.params['studentId'], 10);
+  canvasQuery.getStudentSubmissionsWithComments(sectionId, studentId, (err, json) => {
     if (err) return res.send(err);   // TODO: Better error feedback
     return res.json(json);
   });
@@ -65,6 +86,39 @@ function ceHoursHandler(req, res) {
     return res.json((data.length > 0) ? data[0] : []);
   });
 }
+
+/**
+ * Handle query for a student's CE hours totals, requested by user, year & term.
+ * Returns JSON from live CAM API call.
+ * 10.04.2019 tps Created. Supercedes ceHoursHandler.
+ */
+function ceHoursYearTermHandler(req, res) {
+  const emailAddress = req.params['emailAddress'];
+  const year = req.params['year'];
+  const term = req.params['term'];
+
+  // Build CAM API query for 1 student.
+  let camQuery = req.app.locals.CAM_CE_HOURS_URL.replace('${userEmail}', emailAddress);
+  camQuery = camQuery.replace('${year}', year);
+  camQuery = camQuery.replace('${term}', term);
+
+  camApi.collectApiResults([camQuery], (err, data) => {
+    if (err) return res.json({error: err});   // TODO: Better error feedback
+
+    // Results come back as an array of ararys, but we're
+    // only interested in the 1st item the 1st sub-array,
+    // which looks like:
+    // [ { last_name: 'John',
+    // first_name: 'Doe',
+    // email: 'abcdefg@ourdomain.org',
+    // total_hours: '29',
+    // verified_hours: '18' } ]
+
+    // I suppose we could come back with no data
+    return res.json((data.length > 0) ? data[0] : []);
+  });
+}
+
 
 /**
  * Handle query for quiz submission event.
@@ -258,6 +312,26 @@ function critiqueItCourseAssignmentsHandler(req, res) {
 }
 
 
+/* Handle restful request for authorization token for a given user. 
+09.27.2019 tps
+Try to be a bit more secure by allowing only dev users to specify
+the user login for the token. For LTI users, create a token using
+the user's login.
+*/
+function getAuthHandler(req, res) {
+  let userLogin = req.session.custom_canvas_user_login_id;
+  if (req.session.userAuthMethod === 'dev') {
+    userLogin = req.params['loginId'];  // Expected to be a CAM email
+  }
+  return res.send(authUtils.createToken(userLogin));
+}
+
+// function getCeHoursEntryAuthHandler(req, res) {
+//   // Use session's Canvas login in.
+//   const userLogin = req.session.custom_canvas_user_login_id;
+//   return res.send(authUtils.createToken(userLogin));
+// }
+
 /******************** Router Middleware *********************/
 
 /**
@@ -276,7 +350,9 @@ function secureApi(req, res, next) {
 /******************** Endpoint URLs *********************/
 router.use(secureApi);
 router.get('/sections/:sectionId/students/:studentId/submissions', studentSubmissionsHandler);
-router.get('/cehours/:emailAddress', ceHoursHandler);
+router.get('/cehours/:emailAddress', ceHoursHandler); // Obsolete
+router.get('/cehours/:emailAddress/year/:year/term/:term', ceHoursYearTermHandler);
+router.get('/sections/:sectionId/students/:studentId/submissionswithcomments', studentSubmissionsWithCommentsHandler);
 router.get('/courses/:courseId/quizzes/:quizId/submissions/:submissionId/events', quizEventsHandler);
 router.get('/courses/:courseId/quizzes/:quizId/students/:studentId/submissions', quizSubmissionsHandler);
 router.get('/lookup/email/:emailAddress', camUserSearchHandler);
@@ -299,5 +375,13 @@ router.post('/dashUser/:canvasUserId/smsSaveAndTest', jsonParser, smsSaveAndTest
 
 const googleDriveHandler = require('./googleDriveHandler');
 router.post('/google/drive/doc', googleDriveHandler.post);
+
+const googleDriveFoldersHandler = require('./googleDriveFoldersHandler');
+router.post('/google/drive/Mod7TargetFolder', googleDriveFoldersHandler.postMod7TargetFolder);
+router.get ('/google/drive/Mod7SourceDocs', googleDriveFoldersHandler.getMod7SourceDocs);
+router.post('/google/drive/Mod7DocCopy', googleDriveFoldersHandler.postMod7DocCopy);
+
+router.get('/auth/login/:loginId', getAuthHandler);
+// router.get('/auth/cehoursentry', getCeHoursEntryAuthHandler);
 
 exports.router = router;

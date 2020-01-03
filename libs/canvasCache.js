@@ -9,13 +9,19 @@
   10.09.2018 tps Search for iSupervision courses modified for bang-suffix names.
   12.19.2018 tps For student dashboard, add student list to cache.
   04.05.2019 tps Add faculty member CAM data to the cache.
-*/
+  09.24.2019 tps Add function to load specially constructed enrollment data.
+  09.24.2019 tps Add function to load dashboard modules with a supplied term configuration.
+  10.01.2019 tps Include restored access courses.
+  10.04.2019 tps Add function load iSupervision course list without a query.
+  */
 
 // const fs          = require('fs');
 const async       = require('async');
 const canvasQuery = require('./canvasQuery');
 const appConfig   = require('./appConfig');
 const moduleCache = require('./moduleCache');
+const dashModules = require('./dashboardModules');
+const dashSemesters = require('./dashSemesters');  // 10.01.2019 tps 
 
 // const CACHE_DIR = 'canvas_cache/';
 
@@ -103,6 +109,16 @@ function loadCourseEnrollments(courseId, callback) {
   return moduleCache.loadQuery(queryKey, queryFunction, callback);
 }
 
+// 09.24.2019 tps Load course enrollments into cache using a specially constructed course enrollments
+// just for restored access users,
+function useCourseEnrollments(courseId, jsonEnrollments, callback) {
+  const queryKey = `courses_${courseId}_enrollments`;
+  const queryFunction = function(callback) {
+    return callback(null, jsonEnrollments);
+  }
+  return moduleCache.loadQuery(queryKey, queryFunction, callback);
+}
+
 function loadCourseSections(courseId, callback) {
   const queryKey = `courses_${courseId}_sections`;
   const queryFunction = function(callback) {
@@ -162,10 +178,23 @@ function loadCourseQuizzes(courseId, callback) {
 function loadDashboardModules(courseId, callback) {
   const queryKey = `courses_${courseId}_modules_dashboard`;
   const queryFunction = function(callback) {
-    return require('./dashboardModules')(courseId, callback);
+    return dashModules.build(courseId, callback);
+    // return require('./dashboardModules').build(courseId, callback);
   }
   return moduleCache.loadQuery(queryKey, queryFunction, callback);
 }
+
+
+// 09.24.2019 tps Version of loading dashboard modules with supplied
+// term configuration. Added to handle terms with restored access students.
+function loadDashboardModulesWithTermConfig(courseId, termConfig, callback) {
+  const queryKey = `courses_${courseId}_modules_dashboard`;
+  const queryFunction = function(callback) {
+    return dashModules.buildWithTermConfig(courseId, termConfig, callback);
+  }
+  return moduleCache.loadQuery(queryKey, queryFunction, callback);
+}
+
 
 function loadCourses(callback) {
   const queryKey = `courses`;
@@ -176,6 +205,15 @@ function loadISupeCourses(callback) {
   const queryKey = `iSupeCourses`;
   const queryFunction = function(callback) {
     return buildISupeList(callback);
+  }
+  return moduleCache.loadQuery(queryKey, queryFunction, callback);
+}
+
+// 10.04.2019 tps Load a list of iSupervision courses into cache through parameter rather than query.
+function useISupeCourses(json, callback) {
+  const queryKey = `iSupeCourses`;
+  const queryFunction = function(callback) {
+    return callback(null, json);
   }
   return moduleCache.loadQuery(queryKey, queryFunction, callback);
 }
@@ -196,18 +234,33 @@ function loadFacultyCam(callback) {
  * Assume that we've prefetched the term course enrollment lists.
  * 
  * callback signature: (err, facultyListJson) 
+ * 
+ * 09.30.2019 tps Include faculty in restored access courses.
  */
 function buildFacultyList(callback) {
-  const termIds = appConfig.getTerms().map( e => e.course_id);
-  var facultyList = [];   // Accumulate faculty user objects
-
-  for (let courseId of termIds) {
-    const enrollments = getCourseEnrollments(courseId);
-    const facultyUsers = enrollments.filter( e => FACULTY_TYPES.includes(e.type));
-    facultyList = facultyList.concat(facultyUsers);
+  let facultyList = [];   // Accumulate faculty user objects
+  const allSemesters = dashSemesters.getAll();
+  for(let semester of allSemesters) {
+    const termIds = semester.terms_config.map( e => e.course_id);
+    for (let courseId of termIds) {
+      const enrollments = getCourseEnrollments(courseId);
+      const facultyUsers = enrollments.filter( e => FACULTY_TYPES.includes(e.type));
+      facultyList = facultyList.concat(facultyUsers);
+    }
   }
   facultyList.sort(compareEnrollees);
   return process.nextTick(callback, null, facultyList);
+
+  // const termIds = appConfig.getTerms().map( e => e.course_id);
+  // var facultyList = [];   // Accumulate faculty user objects
+
+  // for (let courseId of termIds) {
+  //   const enrollments = getCourseEnrollments(courseId);
+  //   const facultyUsers = enrollments.filter( e => FACULTY_TYPES.includes(e.type));
+  //   facultyList = facultyList.concat(facultyUsers);
+  // }
+  // facultyList.sort(compareEnrollees);
+  // return process.nextTick(callback, null, facultyList);
 }
 
 /**
@@ -230,6 +283,8 @@ function buildFacultyList(callback) {
  * e.g. "CST1841S-misl0908!"
  * 
  * callback signature: (err, <array of JSON course objects>) 
+ * 
+ * 09.30.2019 tps Include restored access courses.
  */
 function buildISupeList(callback) {
 
@@ -239,37 +294,77 @@ function buildISupeList(callback) {
   const facultyLogins = Array.from(
     new Set(getFaculty().map(e => e.user.login_id.split('@')[0] )) );
 
-  // Get list of prefixes for iSupervision course names
-  const terms = appConfig.getTerms();
-  const iSupePrefixes = Array.from(new Set(terms.map( e => e.isupe_prefix )));
+  // Loop through all a semester's iSupervision prefixes
+  const semesters = dashSemesters.getAll();
+  for(let semester of semesters) {
 
-  // See how many of these iSupervision course names we can find
-  const courses = getCourses();
-  for (let facultyLogin of facultyLogins) {
-    for (let iSupePrefix of iSupePrefixes) {
+    // Get list of prefixes for iSupervision course names
+    const terms = semester.terms_config;
+    const iSupePrefixes = Array.from(new Set(terms.map( e => e.isupe_prefix )));
 
-      const iSupeCourseName = iSupePrefix + facultyLogin;
-      // const iSupeCourse = courses.find( e => e.name === iSupeCourseName);
-      // const iSupeCourse = courses.find( e => e.sis_course_id === iSupeCourseName);
+    // See how many of these iSupervision course names we can find
+    const courses = getCourses();
+    for (let facultyLogin of facultyLogins) {
+      for (let iSupePrefix of iSupePrefixes) {
 
-      // If there is both a bang suffix & non-bang suffix version of the
-      // iSupervision course name, use the non-bang version.
-      let iSupeCourse = courses.find( e => e.sis_course_id === iSupeCourseName);
-      if (!iSupeCourse) {
-        iSupeCourse = courses.find( e => e.sis_course_id === (iSupeCourseName + '!'));
-      }
+        const iSupeCourseName = iSupePrefix + facultyLogin;
+        // If there is both a bang suffix & non-bang suffix version of the
+        // iSupervision course name, use the non-bang version.
+        let iSupeCourse = courses.find( e => e.sis_course_id === iSupeCourseName);
+        if (!iSupeCourse) {
+          iSupeCourse = courses.find( e => e.sis_course_id === (iSupeCourseName + '!'));
+        }
 
-      if (iSupeCourse) {
-        iSupeCourses.push({
-          id: iSupeCourse.id,
-          sis_course_id: iSupeCourse.sis_course_id
-        });
-      }
+        if (iSupeCourse) {
+          iSupeCourses.push({
+            id: iSupeCourse.id,
+            sis_course_id: iSupeCourse.sis_course_id
+          });
+        }
 
-    } // end loop through iSupervision course name prefixes
+      } // end loop through iSupervision course name prefixes
+    } // end loop through semesters
   } // end loop through faculty logins
 
   return process.nextTick(callback, null, iSupeCourses);
+
+  // var iSupeCourses = [];  // Populate with list of iSupervision courses.
+  
+  // // Get list of faculty logins
+  // const facultyLogins = Array.from(
+  //   new Set(getFaculty().map(e => e.user.login_id.split('@')[0] )) );
+
+  // // Get list of prefixes for iSupervision course names
+  // const terms = appConfig.getTerms();
+  // const iSupePrefixes = Array.from(new Set(terms.map( e => e.isupe_prefix )));
+
+  // // See how many of these iSupervision course names we can find
+  // const courses = getCourses();
+  // for (let facultyLogin of facultyLogins) {
+  //   for (let iSupePrefix of iSupePrefixes) {
+
+  //     const iSupeCourseName = iSupePrefix + facultyLogin;
+  //     // const iSupeCourse = courses.find( e => e.name === iSupeCourseName);
+  //     // const iSupeCourse = courses.find( e => e.sis_course_id === iSupeCourseName);
+
+  //     // If there is both a bang suffix & non-bang suffix version of the
+  //     // iSupervision course name, use the non-bang version.
+  //     let iSupeCourse = courses.find( e => e.sis_course_id === iSupeCourseName);
+  //     if (!iSupeCourse) {
+  //       iSupeCourse = courses.find( e => e.sis_course_id === (iSupeCourseName + '!'));
+  //     }
+
+  //     if (iSupeCourse) {
+  //       iSupeCourses.push({
+  //         id: iSupeCourse.id,
+  //         sis_course_id: iSupeCourse.sis_course_id
+  //       });
+  //     }
+
+  //   } // end loop through iSupervision course name prefixes
+  // } // end loop through faculty logins
+
+  // return process.nextTick(callback, null, iSupeCourses);
 }
 
 
@@ -288,18 +383,37 @@ function loadStudents(callback) {
  * Assume that we've prefetched the term course enrollment lists.
  * 
  * callback signature: (err, <array of student enrollment JSON objects>) 
+ * 
+ * 10.01.2019 tps Include restored access courses.
  */
 function buildStudentList(callback) {
-  const termIds = appConfig.getTerms().map( e => e.course_id);
   var enrollmentList = [];   // Accumulate user objects
 
-  for (let courseId of termIds) {
-    const enrollments = getCourseEnrollments(courseId);
-    const studentUsers = enrollments.filter( e => 'StudentEnrollment' === e.type);
-    enrollmentList = enrollmentList.concat(studentUsers);
+  // Loop through all a semester's iSupervision prefixes
+  const semesters = dashSemesters.getAll();
+  for(let semester of semesters) {
+ 
+    const termIds = semester.terms_config.map( e => e.course_id);
+
+    for (let courseId of termIds) {
+      const enrollments = getCourseEnrollments(courseId);
+      const studentUsers = enrollments.filter( e => 'StudentEnrollment' === e.type);
+      enrollmentList = enrollmentList.concat(studentUsers);
+    }
   }
   enrollmentList.sort(compareEnrollees);
   return process.nextTick(callback, null, enrollmentList);
+
+  // const termIds = appConfig.getTerms().map( e => e.course_id);
+  // var enrollmentList = [];   // Accumulate user objects
+
+  // for (let courseId of termIds) {
+  //   const enrollments = getCourseEnrollments(courseId);
+  //   const studentUsers = enrollments.filter( e => 'StudentEnrollment' === e.type);
+  //   enrollmentList = enrollmentList.concat(studentUsers);
+  // }
+  // enrollmentList.sort(compareEnrollees);
+  // return process.nextTick(callback, null, enrollmentList);
 }
 
 
@@ -345,6 +459,10 @@ exports.loadStudents = loadStudents;
 exports.loadUserAssignments = loadUserAssignments;
 // exports.loadAdaptedCourseModules = loadAdaptedCourseModules;
 exports.loadDashboardModules = loadDashboardModules;
+exports.loadDashboardModulesWithTermConfig = loadDashboardModulesWithTermConfig;
 exports.loadCourses = loadCourses;
 exports.loadISupeCourses = loadISupeCourses;
 exports.loadFacultyCam = loadFacultyCam;
+
+exports.useCourseEnrollments = useCourseEnrollments;
+exports.useISupeCourses = useISupeCourses;

@@ -11,6 +11,10 @@
 // 02.27.2019 tps Identify module's grading assignment by name rather than position.
 // 03.22.2019 tps Fix status color for case of graded assignment being reset to no grade.
 // 05.09.2019 tps Abbreviate incomplete/complete grade labels.
+// 09.09.2019 tps Modify layout to accommodate up to 27 items per module.
+// 10.02.2019 tps Past courses with students with restored access.
+// 10.04.2019 tps Retrieve CE hours by term & year.
+// 12.20.2019 tps Link teacher candidates to CE Hours entry app.
 
 // Wait for DOM to load before trying to read dashboard framework data
 document.addEventListener("DOMContentLoaded", initGlobals);
@@ -18,7 +22,8 @@ document.addEventListener("DOMContentLoaded", initGlobals);
 function initGlobals() {
   // Retrieve terms data from hidden page element & make it globally available to scripts
   window.CST = {};
-  window.CST.terms = JSON.parse(document.getElementById('userTerms').innerText);
+  window.CST.semesters = JSON.parse(document.getElementById('semesters').innerText);
+  // window.CST.terms = JSON.parse(document.getElementById('userTerms').innerText);
   window.CST.facultyUser = JSON.parse(document.getElementById('facultyUser').innerText);
   window.CST.appLocation = document.getElementById('appLocation').innerText;
   window.CST.canvasBaseUrl = document.getElementById('canvasBaseUrl').innerText;
@@ -38,16 +43,24 @@ function loadSubmissions() {
     ++ajaxCalls;
   }
 
-  for (term of window.CST.terms) {
-    for (student of term.students) {
-      getCeHours(term.code, student.id, ajaxDone);
-      getSubmissionsByStudent(term.code, term.course_section_id, student.id, ajaxDone);
-      getSurveySubmmissionsByStudent(term.code, student.id, ajaxDone);
+  for (semester of window.CST.semesters) {   // 10.02.2019 tps Top level loop is semesters
+    for (term of semester.term_courses) {
+    // for (term of window.CST.terms) {
+      for (student of term.students) {
+        // getCeHours(term, student.id, ajaxDone);
+        getCeHours(term, student.id, semester.year, semester.season, ajaxDone);
+        getSubmissionsByStudent(term, term.course_section_id, student.id, ajaxDone);
+        getSurveySubmmissionsByStudent(term, student.id, ajaxDone);
+        // getCeHours(term.code, student.id, ajaxDone);
+        // getSubmissionsByStudent(term.code, term.course_section_id, student.id, ajaxDone);
+        // getSurveySubmmissionsByStudent(term.code, student.id, ajaxDone);
+      }
     }
   }
 }
 
-function getSubmissionsByStudent(termCode, sectionId, studentId, done) {
+function getSubmissionsByStudent(term, sectionId, studentId, done) {
+  // function getSubmissionsByStudent(termCode, sectionId, studentId, done) {
    
   var httpRequest = new XMLHttpRequest();
   if (!httpRequest) {
@@ -70,7 +83,7 @@ function getSubmissionsByStudent(termCode, sectionId, studentId, done) {
         // alert(`AJAX call returned.\nSection ID ${sectionId}\nStudent ID ${studentId}\nSubmissions count: ${submissions.length}`);
 
         // Count submissions for each module
-        const term = window.CST.terms.find( e => e.code === termCode);
+        // const term = window.CST.terms.find( e => e.code === termCode);
         for (let moduleIndex = 0; moduleIndex < term.modules.length; ++moduleIndex) {
           let module = term.modules[moduleIndex];
 
@@ -136,7 +149,7 @@ function getSubmissionsByStudent(termCode, sectionId, studentId, done) {
           // assAnchor.text = "grid goes here";
           assGridContainer.appendChild(assAnchor);
 
-          const GRID_WIDTH = 8; // Number of items in each row of the grid
+          const GRID_WIDTH = 9; // Number of items in each row of the grid
           let hasRecentSubmission = false;  // Set true if one of the module submissions was submitted within 48hrs.
           let moduleGrade = null;   // Populate with grade of last submission in the module.
           let moduleRubric = null;  // Populate with rubric of last submission in the module.
@@ -331,10 +344,11 @@ function getSubmissionsByStudent(termCode, sectionId, studentId, done) {
   } // end request handler
 } // end function
 
-function getCeHours(termCode, studentId, done) {
+function getCeHours(term, studentId, year, season, done) {
+  // function getCeHours(term, studentId, done) {
 
   // Look up student's email
-  const term = window.CST.terms.find( e => e.code === termCode);
+  // const term = window.CST.terms.find( e => e.code === termCode);
   const studentObj = term.students.find ( e => e.id === studentId);
   const studentEmail = studentObj.login_id;
    
@@ -346,7 +360,8 @@ function getCeHours(termCode, studentId, done) {
   }
 
   httpRequest.onreadystatechange = ceHoursHandler;
-  httpRequest.open('GET', window.CST.appLocation + 'api/v0/cehours/' + studentEmail, true);
+  // httpRequest.open('GET', window.CST.appLocation + 'api/v0/cehours/' + studentEmail, true);
+  httpRequest.open('GET', window.CST.appLocation + 'api/v0/cehours/' + studentEmail + '/year/' + year + '/term/' + season, true);
   httpRequest.send();
 
   function ceHoursHandler() {
@@ -364,7 +379,7 @@ function getCeHours(termCode, studentId, done) {
         }
 
         // Populate the DOM
-        const tdId = `term_${termCode}_stu_${studentId}`;
+        const tdId = `term_${term.code}_stu_${studentId}`;
         const td = document.getElementById(tdId);
         td.innerHTML = tdHtml;
       } else {
@@ -380,8 +395,9 @@ function getCeHours(termCode, studentId, done) {
 /**
  * Populate DOM with student's survey question answers, using AJAX.
  */
-function getSurveySubmmissionsByStudent(termCode, studentId, done) {
-  const term = window.CST.terms.find( e => e.code === termCode);
+function getSurveySubmmissionsByStudent(term, studentId, done) {
+  // function getSurveySubmmissionsByStudent(termCode, studentId, done) {
+    // const term = window.CST.terms.find( e => e.code === termCode);
   // const termModules = window.CST.courseModules[term.course_id];
   // const surveyModules = termModules.filter( e => e.has_survey);
   const surveyModules = term.modules.filter( e => e.has_survey);
@@ -550,6 +566,62 @@ function getQuizSubmissions(courseId, quizId, studentId, done) {
 function logErrorInPage(errText) {
   const errDiv = document.getElementById('divStatus');
   if (errDiv) {
-    errDiv.innerText =+ "<BR/>" + errText;
+    const newDiv = document.createElement('div');
+    newDiv.innerText = errText;
+    errDiv.appendChild(newDiv);
   }
+}
+
+/********** CE Hours Entry Link **********/
+
+function xhrCall(method, data, endpoint, successHandler, failHandler) {
+  var httpRequest = new XMLHttpRequest();
+  if (!httpRequest) {
+    return failHandler('Giving up :( Cannot create an XMLHTTP instance');
+  }
+
+  httpRequest.onreadystatechange = handler;
+  httpRequest.open(method, endpoint, true);
+  if (method.toUpperCase() === 'POST') {
+    httpRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+  }
+  httpRequest.send(data);
+
+  function handler() {
+    if (httpRequest.readyState === XMLHttpRequest.DONE) {
+      if (httpRequest.status === 200) {
+        return successHandler(httpRequest.response);
+      } else {
+        return failHandler(httpRequest);
+      }
+    }
+  } // end handler function 
+} // end function xhrCall
+
+function linkToCeHoursEntry() {
+  // User's login is the subject of the authorization
+  var userLogin = window.CST.facultyUser.login_id;
+
+  // Guess the base URL of the Web app, in case we're running behind a reverse proxy.
+  var segments = window.location.href.split('/');
+  segments = segments.slice(0, segments.length - 4);   // This page is 4 levels down from app root
+  var baseUrl = segments.join('/') + '/';
+
+  // Get an authorization token for the user
+  var endpoint = baseUrl + 'api/v0/auth/login/' + userLogin;
+  xhrCall('GET', null, endpoint, linkToCeHoursEntryOk, linkToCeHoursEntryFail);
+}
+
+function linkToCeHoursEntryOk(res) {
+  // Use the authorization token to link user to CE Hours app.
+  var authorizationToken = res;
+  var authForm = document.getElementById('ceHoursEntryForm');
+  var authField = authForm.querySelector('#jwt');
+  authField.value = authorizationToken;
+  authForm.submit();
+}
+
+function linkToCeHoursEntryFail(req) {
+  logErrorInPage('Error getting authorization token for CE Hours entry');
+  logErrorInPage(`${req.status} ${req.statusText} ${req.responseText}`);
 }

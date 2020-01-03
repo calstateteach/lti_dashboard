@@ -9,11 +9,13 @@
 10.09.2018 tps Search for iSupervision courses modified for bang-suffix names.
 11.01.2018 tps Add annotation link for Activity 4.05.
 04.17.2019 tps Don't allow CST-Admin to view faculty not in their campus.
+10.02.2019 tps Display semester data for courses with restored access.
 */
 
 const canvasCache = require('../../libs/canvasCache');
-const appConfig   = require('../../libs/appConfig');
+// const appConfig   = require('../../libs/appConfig');
 const checkDashboardRequest = require('./secureDashboardPage');
+const dashSemesters = require('../../libs/dashSemesters');
 
 
 function get(req, res) {
@@ -69,8 +71,22 @@ function get(req, res) {
   };
 
   // Find data for term containing the student of interest.
-  const terms = appConfig.getTerms();
-  var term = terms.find( e => e.course_id === courseId);
+  // 10.02.2019 tps We need to search all the semesters
+  let term = null;
+  const semesters = dashSemesters.getAll();
+  for (let semester of semesters) {
+    term = semester.terms_config.find( e => e.course_id === courseId);
+    if (term) {
+      // For display purposes, include semester info
+      term.year = semester.year;
+      term.season = semester.season;
+      break;
+    }
+  }
+
+  // // Find data for term containing the student of interest.
+  // const terms = appConfig.getTerms();
+  // var term = terms.find( e => e.course_id === courseId);
 
   // Throw in configuration data for the term
   Object.assign(termObject, term);

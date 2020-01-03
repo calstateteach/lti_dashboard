@@ -1,10 +1,12 @@
 /* Module containing functions that render cache priming page.
 05.16.2018 tps Created.
+10.03.2019 tps Repoint to module that primes cache for all semesters.
 */
 
 const async       = require('async');
 const cacheStatus = require('../../libs/cacheStatus');
-const CachePrimer = require('../../libs/cachePrimer');
+// const CachePrimer = require('../../libs/cachePrimer');
+const CachePrimer = require('../../libs/cacheSemestersPrimer');
 
 function get(req, res) {
   

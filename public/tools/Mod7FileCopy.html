@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8">
+  <title>Mod7FileCopy.html</title>
+  <link rel="stylesheet" href="../LatoLatin/latolatinfonts.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+
+<body>
+<p>Clicking the button below will automatically:<br>
+  1. Create a folder in the root (top level) of your Google Drive called &quot;MyRICA Study Guides&quot; if it does not already exist. If that folder does already exist, it will create a new one with a different name.<br>
+  2. Copy the files from <a href="https://drive.google.com/drive/folders/1-vmKtw4hCbEnSYrjikHuWUH3glqW2nx5", target="_blank">this folder</a> to &quot;MyRICA Study Guides&quot;.</p>
+<input type="button" name="button" id="button" value="Begin Copy" onclick="createTarget()">
+<p>It will take about a minute for this process to complete. Once the copy is complete you can close this tab.</p>
+<p>&nbsp;</p><div id="feedback" STYLE="background-color:LINEN; padding:10px; display:none;"></div>
+<div id="spinner" STYLE="text-align:center; display:none; margin-top:20px;"><IMG SRC="../spinner_small.gif"></div>
+
+<SCRIPT SRC="Mod7FileCopy.js"></SCRIPT>
+</body>
+</html>

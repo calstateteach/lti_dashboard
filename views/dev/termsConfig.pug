@@ -13,12 +13,15 @@ body
   p
     A(HREF="./home") Home
   H1 CST Dashboard Terms Configuration
-  P File: <EM>#{configItem.filePath}</EM>
-  P Last parsed: <EM>#{configItem.timestamp.toLocaleString('en-US')}</EM>
+  //- P File: <EM>#{configItem.filePath}</EM>
+  P File: <EM>#{filePath}</EM>
+  //- P Last parsed: <EM>#{configItem.timestamp.toLocaleString('en-US')}</EM>
+  P Last parsed: <EM>#{timestamp.toLocaleString('en-US')}</EM>
   H2 Configuration JSON
-  PRE= JSON.stringify(configItem.value, null, 2)
-  H2 File Contents
-  PRE= fileData
+  //- PRE= JSON.stringify(configItem.value, null, 2)
+  PRE= JSON.stringify(allConfigs, null, 2)
+  //- H2 File Contents
+  //- PRE= fileData
   FORM(ACTION='termsConfig' METHOD='POST')
     INPUT(TYPE='submit' value='Reload terms data')
     INPUT(TYPE='hidden' name='action' value='reload')

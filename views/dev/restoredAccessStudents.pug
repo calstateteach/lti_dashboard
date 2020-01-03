@@ -1,0 +1,25 @@
+doctype html
+html(lang='en')
+  head
+    title Restored Access Students
+    link(rel="stylesheet", href=APP_URL + "LatoLatin/latolatinfonts.css")
+    link(rel="stylesheet", href=APP_URL + "style.css")
+  body
+    p
+      A(HREF="./home") Home
+    H1 Students with Restored Access
+    P= 'Students with restored access, retrieved from CAM API at ' + timestamp
+
+    -var keys = Object.keys(data[0].students[0])
+
+    for obj in data
+      H2= obj.year + ' ' + obj.season
+
+      TABLE.data
+        TR
+          for key in keys
+            TH= key
+        for student in obj.students
+          TR
+            for key in keys
+              TD= student[key]
