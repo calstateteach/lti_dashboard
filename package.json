@@ -26,7 +26,7 @@
     "mustache": "^2.3.0",
     "nodemon": "^1.18.10",
     "oauth-sign": "^0.8.2",
-    "parse-link-header": "^1.0.1",
+    "parse-link-header": "^2.0.0",
     "pug": "^2.0.3",
     "request-json": "^0.6.4",
     "twilio": "^3.18.0",
